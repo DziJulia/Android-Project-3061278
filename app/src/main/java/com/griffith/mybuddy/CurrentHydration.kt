@@ -4,8 +4,10 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,13 +16,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 
 class CurrentHydration : ComponentActivity() {
@@ -33,55 +42,85 @@ class CurrentHydration : ComponentActivity() {
     }
 }
 
+// A mutable state variable that holds the value of the currently
+// selected button. It is initially set to "C".
+var selectedButton by mutableStateOf("C")
+
+/**
+ * @Composable function to create a row of buttons.
+ */
 @Composable
 fun MyButtonsRow() {
     val context = LocalContext.current
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(650.dp))
-        Divider(color = Color.Blue, thickness = 2.dp)
-        Spacer(modifier = Modifier.height(32.dp))
+        Divider(color = Color.Blue, thickness = 3.dp)
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 32.dp),
+            modifier = Modifier.padding(10.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.Bottom
         ) {
-            Button(
-                onClick = {
-                    val intent = Intent(context, CurrentHydration::class.java)
-                    context.startActivity(intent)
-                },
-                shape = CircleShape,
-                modifier = Modifier.size(100.dp)
-            ) {
-                Text("C")
-            }
-
-            Button(
-                onClick = {
-                    val intent = Intent(context, Profile::class.java)
-                    context.startActivity(intent)
-                },
-                shape = CircleShape,
-                modifier = Modifier.size(100.dp)
-            ) {
-                Text("P")
-            }
-
-            Button(
-                onClick = {
-                    val intent = Intent(context, Profile::class.java)
-                    context.startActivity(intent)
-                },
-                shape = CircleShape,
-                modifier = Modifier.size(100.dp)
-            ) {
-                Text("H")
-            }
+            ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
+            Spacer(modifier = Modifier.size(30.dp))
+            ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
+            Spacer(modifier = Modifier.size(30.dp))
+            ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
         }
     }
+}
+
+/**
+ * @Composable function to create a button item in the row.
+ * @param text The text to display on the button.
+ * @param destination The destination class when the button is clicked.
+ * @param context The current context.
+ * @param isSelected Whether the button is currently selected.
+ * @param onSelected The action to perform when the button is selected.
+ */
+@Composable
+fun ButtonRowItem(text: String, destination: Class<*>, context: android.content.Context, isSelected: Boolean, onSelected: () -> Unit) {
+    val iconColor = if (isSelected) Color.Blue else Color.Gray
+    val iconResource = when (text) {
+        "C" -> R.drawable.drop
+        "P" -> R.drawable.profile
+        "H" -> R.drawable.history
+        else -> null
+    }
+
+    Button(
+        onClick = {
+            val intent = Intent(context, destination)
+            context.startActivity(intent)
+            onSelected()
+        },
+        shape = CircleShape,
+        modifier = Modifier.size(70.dp),
+        colors = ButtonDefaults.buttonColors(Color.Transparent),
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        if (iconResource != null) {
+            IconImage(iconResource, text, iconColor)
+        } else {
+            Text(text)
+        }
+    }
+}
+
+/**
+ * @Composable function to create an image icon.
+ * @param resourceId The resource id of the image.
+ * @param contentDescription The content description of the image.
+ * @param color The color filter to apply to the image.
+ */
+@Composable
+fun IconImage(resourceId: Int, contentDescription: String, color: Color) {
+    Image(
+        painter = painterResource(id = resourceId),
+        contentDescription = contentDescription,
+        modifier = Modifier.size(70.dp),
+        colorFilter = ColorFilter.tint(color)
+    )
 }
