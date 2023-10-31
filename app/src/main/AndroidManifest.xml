@@ -39,5 +39,4 @@
             android:theme="@style/Theme.MyBuddy">
         </activity>
     </application>
-
 </manifest>
