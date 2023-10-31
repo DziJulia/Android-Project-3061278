@@ -13,11 +13,6 @@
         android:theme="@style/Theme.MyBuddy"
         tools:targetApi="31">
         <activity
-            android:name=".CurrentHydration"
-            android:exported="false"
-            android:label="@string/title_activity_current_hydration"
-            android:theme="@style/Theme.MyBuddy" />
-        <activity
             android:name=".History"
             android:exported="false"
             android:label="@string/title_activity_history"
@@ -33,7 +28,7 @@
             android:label="@string/title_activity_login"
             android:theme="@style/Theme.MyBuddy" />
         <activity
-            android:name=".MainActivity"
+            android:name=".CurrentHydration"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.MyBuddy">
