@@ -5,11 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 
-class Profile : ComponentActivity() {
+class CurrentHydration : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Text("PROFILE")
+            Text("CURRENT")
             MyButtonsRow()
         }
     }
