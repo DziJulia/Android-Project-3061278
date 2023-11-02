@@ -2,10 +2,12 @@ package com.griffith.mybuddy
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,14 +17,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,13 +39,19 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.delay
 
 class CurrentHydration : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Text("Current Hydration")
-            MyButtonsRow()
+            Box(modifier = Modifier.fillMaxSize()) {
+                Text("Current Hydration",
+                    modifier = Modifier.align(Alignment.Center))
+                MyButtonsRow()
+                LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
+            }
         }
     }
 }
@@ -123,4 +137,39 @@ fun IconImage(resourceId: Int, contentDescription: String, color: Color) {
         modifier = Modifier.size(70.dp),
         colorFilter = ColorFilter.tint(color)
     )
+}
+
+/**
+ * This is a composable function that creates a LogOut button. When the button is clicked,
+ * an AlertDialog is shown to the user. After a delay, the user is redirected to the Login screen.
+ * @param modifier Modifier for styling the LogOut button. Default value is Modifier.
+ */
+@Composable
+fun LogOutButton(modifier: Modifier = Modifier) {
+    val showDialog = remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    if (showDialog.value) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text(text = "Log Out") },
+            text = { Text(text = "You have been successfully logged out!") },
+            confirmButton = { Row { } },
+            properties = DialogProperties(dismissOnClickOutside = false)
+        )
+
+        LaunchedEffect(showDialog.value) {
+            delay(2000)
+            showDialog.value = false
+            val intent = Intent(context, Login::class.java)
+            context.startActivity(intent)
+        }
+    }
+
+    Button(
+        onClick = { showDialog.value = true },
+        modifier = modifier.padding(top = 20.dp, end = 20.dp)
+    ) {
+        Text("LogOut")
+    }
 }
