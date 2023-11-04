@@ -1,16 +1,12 @@
 package com.griffith.mybuddy
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -28,18 +24,47 @@ class Login : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val context = LocalContext.current
-            //TODO need to  size app the logo better
-            //TODO need to figure out Forgot Password
-            //TODO LOGIN verificate through database email and password
-            //TODO register page to create user in database ,validation of input
-            //TODO make sure registration have strong password maybe option for google login..
+            SetupUI(resources.configuration.orientation)
+        }
+    }
+
+    /**
+     * Responds to changes in the device's configuration, such as when the orientation is changed.
+     * @param newConfig The new configuration that the system has changed to.
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        setContent {
+            SetupUI(newConfig.orientation)
+        }
+    }
+}
+
+/**
+ * This function sets up the UI for the login screen. It adjusts the layout
+ * based on the orientation of the device.
+ * @param orientation The current orientation of the device. Use
+ * Configuration.ORIENTATION_PORTRAIT for portrait mode and
+ * Configuration.ORIENTATION_LANDSCAPE for landscape mode.
+ */
+@Composable
+fun SetupUI(orientation: Int) {
+    val context = LocalContext.current
+
+    if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Image(painter = painterResource(id = R.drawable.logo), contentDescription = "App Logo")
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = "App Logo",
+                    modifier = Modifier.size(200.dp)
+                )
                 NameField()
                 PasswordField()
                 Row {
@@ -55,6 +80,46 @@ class Login : ComponentActivity() {
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
                 Button(onClick = { /* Handle registration either pop up or new activity*/ }) {
                     Text("Register")
+                }
+            }
+        }
+    } else if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxSize()
+                    .offset(x = 50.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = "App Logo",
+                    modifier = Modifier.size(300.dp)
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    NameField()
+                    PasswordField()
+                    Row {
+                        Text("Forgot Password") // This will be a link in the future.
+                        Spacer(modifier = Modifier.padding(horizontal = 10.dp))
+                        Button(onClick = {
+                            val intent = Intent(context, CurrentHydration::class.java)
+                            context.startActivity(intent)
+                        }) {
+                            Text("Login")
+                        }
+                    }
+                    Spacer(modifier = Modifier.padding(vertical = 10.dp))
+                    Button(onClick = { /* Handle registration either pop up or new activity*/ }) {
+                        Text("Register")
+                    }
                 }
             }
         }

@@ -1,6 +1,7 @@
 package com.griffith.mybuddy
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -49,39 +50,56 @@ class CurrentHydration : ComponentActivity() {
             Box(modifier = Modifier.fillMaxSize()) {
                 Text("Current Hydration",
                     modifier = Modifier.align(Alignment.Center))
-                MyButtonsRow()
+                val context = LocalContext.current
+                val isPortrait = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+                MyButtonsRow(isPortrait = isPortrait)
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
             }
         }
     }
 }
 
+
 // A mutable state variable that holds the value of the currently
 // selected button. It is initially set to "C".
 var selectedButton by mutableStateOf("C")
 
 /**
- * @Composable function to create a row of buttons.
+ * @Composable function to create a row or column of buttons based on the screen orientation.
+ * @param isPortrait Flag indicating whether the device is in portrait mode.
  */
 @Composable
-fun MyButtonsRow() {
+fun MyButtonsRow(isPortrait: Boolean) {
     val context = LocalContext.current
 
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Bottom,
-        horizontalAlignment = Alignment.CenterHorizontally
+        verticalArrangement = if (isPortrait) Arrangement.Bottom else Arrangement.Center,
+        horizontalAlignment = if (isPortrait) Alignment.CenterHorizontally else Alignment.End
     ) {
-        Divider(color = Color.Blue, thickness = 3.dp)
-        Row(
-            modifier = Modifier.padding(10.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-        ) {
-            ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
-            Spacer(modifier = Modifier.size(30.dp))
-            ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
-            Spacer(modifier = Modifier.size(30.dp))
-            ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
+        if (isPortrait) {
+            Divider(color = Color.Blue, thickness = 3.dp)
+            Row(
+                modifier = Modifier.padding(10.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
+                Spacer(modifier = Modifier.size(30.dp))
+                ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
+                Spacer(modifier = Modifier.size(30.dp))
+                ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
+            }
+        } else {
+            Column(
+                modifier = Modifier.padding(10.dp),
+                verticalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
+                Spacer(modifier = Modifier.size(10.dp))
+                ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
+                Spacer(modifier = Modifier.size(10.dp))
+                ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
+            }
         }
     }
 }
@@ -131,10 +149,12 @@ fun ButtonRowItem(text: String, destination: Class<*>, context: android.content.
  */
 @Composable
 fun IconImage(resourceId: Int, contentDescription: String, color: Color) {
+    val size = if (contentDescription == "Logout") 24.dp else 60.dp
+
     Image(
         painter = painterResource(id = resourceId),
         contentDescription = contentDescription,
-        modifier = Modifier.size(70.dp),
+        modifier = Modifier.size(size),
         colorFilter = ColorFilter.tint(color)
     )
 }
@@ -168,8 +188,12 @@ fun LogOutButton(modifier: Modifier = Modifier) {
 
     Button(
         onClick = { showDialog.value = true },
-        modifier = modifier.padding(top = 20.dp, end = 20.dp)
+        modifier = modifier.padding(top = 10.dp, end = 10.dp),
+        colors = ButtonDefaults.buttonColors(Color.Transparent),
     ) {
-        Text("LogOut")
+        IconImage(
+            R.drawable.logout,
+            "Logout",
+            Color.Gray)
     }
 }
