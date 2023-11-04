@@ -188,12 +188,12 @@ fun LogOutButton(modifier: Modifier = Modifier) {
 
     Button(
         onClick = { showDialog.value = true },
-        modifier = modifier.padding(top = 10.dp, end = 10.dp),
+        modifier = modifier.padding(top = 5.dp),
         colors = ButtonDefaults.buttonColors(Color.Transparent),
     ) {
         IconImage(
             R.drawable.logout,
             "Logout",
-            Color.Gray)
+            Color.Black)
     }
 }
