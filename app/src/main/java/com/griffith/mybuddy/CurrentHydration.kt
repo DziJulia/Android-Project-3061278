@@ -114,7 +114,7 @@ fun MyButtonsRow(isPortrait: Boolean) {
  */
 @Composable
 fun ButtonRowItem(text: String, destination: Class<*>, context: android.content.Context, isSelected: Boolean, onSelected: () -> Unit) {
-    val iconColor = if (isSelected) Color.Blue else Color.Gray
+    val iconColor = if (isSelected) Color.Blue else Color.Black
     val iconResource = when (text) {
         "C" -> R.drawable.drop
         "P" -> R.drawable.profile
