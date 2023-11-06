@@ -38,14 +38,18 @@ class Profile : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val activityBackground = Modifier.background(color = Color(232, 244, 248))
-
             Box(modifier = Modifier.fillMaxSize().then(activityBackground)) {
                 val context = LocalContext.current
                 val isPortrait = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
                 MyButtonsRow(isPortrait = isPortrait)
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
-                ProfileForm()
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "Profile",
+                        style = TextStyle(fontSize = 30.sp,fontWeight = FontWeight.Bold)
+                    )
+                    ProfileForm()
+                }
             }
         }
     }
@@ -70,7 +74,6 @@ fun ProfileForm() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Profile", style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold))
         Spacer(modifier = Modifier.size(15.dp))
         Card(modifier = formBackground) {
              val name = remember { mutableStateOf("") }

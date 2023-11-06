@@ -47,7 +47,7 @@ class CurrentHydration : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize().then(activityBackground)) {
                 Text("Current Hydration",
                     modifier = Modifier.align(Alignment.Center))
                 val context = LocalContext.current
