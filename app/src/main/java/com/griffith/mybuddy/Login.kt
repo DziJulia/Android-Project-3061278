@@ -26,7 +26,7 @@ class Login : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            SetupUI(resources.configuration.orientation)
+            SetupUI()
         }
     }
 
@@ -37,7 +37,7 @@ class Login : ComponentActivity() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         setContent {
-            SetupUI(newConfig.orientation)
+            SetupUI()
         }
     }
 }
@@ -47,15 +47,12 @@ val activityBackground = Modifier.background(color = Color(232, 244, 248))
 /**
  * This function sets up the UI for the login screen. It adjusts the layout
  * based on the orientation of the device.
- * @param orientation The current orientation of the device. Use
- * Configuration.ORIENTATION_PORTRAIT for portrait mode and
- * Configuration.ORIENTATION_LANDSCAPE for landscape mode.
  */
 @Composable
-fun SetupUI(orientation: Int) {
+fun SetupUI() {
     val context = LocalContext.current
 
-    if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+    if (!isLandscape()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -87,7 +84,7 @@ fun SetupUI(orientation: Int) {
                 }
             }
         }
-    } else if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+    } else if (isLandscape()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Row(
                 modifier = Modifier

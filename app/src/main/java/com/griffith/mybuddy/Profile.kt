@@ -1,15 +1,12 @@
 package com.griffith.mybuddy
 
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -25,9 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,14 +34,13 @@ class Profile : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Box(modifier = Modifier.fillMaxSize().then(activityBackground)) {
-                val context = LocalContext.current
-                val isPortrait = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                MyButtonsRow(isPortrait = isPortrait)
+                MyButtonsRow()
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp, end = if (isLandscape()) 70.dp else 0.dp)) {
+                    Spacer(modifier = Modifier.size(20.dp))
                     Text(
                         "Profile",
-                        style = TextStyle(fontSize = 30.sp,fontWeight = FontWeight.Bold)
+                        style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold)
                     )
                     ProfileForm()
                 }
@@ -58,7 +52,6 @@ class Profile : ComponentActivity() {
 /**
  * Creates a form with fields for name, gender, weight, height, activity level, and water intake goal.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileForm() {
     val scrollState = rememberScrollState()

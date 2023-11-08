@@ -6,15 +6,21 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -37,9 +43,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 
@@ -48,12 +59,135 @@ class CurrentHydration : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Box(modifier = Modifier.fillMaxSize().then(activityBackground)) {
-                Text("Current Hydration",
-                    modifier = Modifier.align(Alignment.Center))
-                val context = LocalContext.current
-                val isPortrait = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                MyButtonsRow(isPortrait = isPortrait)
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = if (isLandscape()) Alignment.Start else Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.size(20.dp))
+                    Text(
+                        "Current Hydration",
+                        modifier = Modifier.align(Alignment.Start).padding(start = 10.dp),
+                        style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(modifier = if (isLandscape()) Modifier else Modifier.size(30.dp))
+                    if (isLandscape()) {
+                        Row() {
+                            Column(
+                                modifier = Modifier.weight(1f).offset(x = 80.dp, y = 20.dp),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                WaterButtons()
+                            }
+                            Box(
+                                modifier = Modifier.weight(1f).offset(x = -70.dp, y = -25.dp)
+                            ) {
+                                HydrationCircle()
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize().padding(bottom = 100.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                HydrationCircle()
+                                WaterButtons()
+                            }
+                        }
+                    }
+                }
+                MyButtonsRow()
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
+            }
+        }
+    }
+}
+
+/**
+ * This function returns the size of a button based on the orientation of the device.
+ * @return Pair<Dp, Dp> - The width and height of the button in dp.
+ * If the device is in landscape mode, it returns 150.dp for width and 35.dp for height.
+ * If the device is not in landscape mode, it returns 150.dp for width and 60.dp for height.
+ */
+@Composable
+fun buttonSize(): Pair<Dp, Dp> {
+    return if (isLandscape()) Pair(150.dp, 35.dp) else Pair(150.dp, 60.dp)
+}
+
+/**
+ * This function returns the size of a circle based on the orientation of the device.
+ * @return Pair<Dp, Dp> - The width and height of the circle in dp.
+ * If the device is in landscape mode, it returns 350.dp for width and 180.dp for height.
+ * If the device is not in landscape mode, it returns 350.dp for width and 200.dp for height.
+ */
+@Composable
+fun circleSize(): Pair<Dp, Dp> {
+    return if (isLandscape()) Pair(350.dp, 180.dp) else Pair(350.dp, 200.dp)
+}
+
+/**
+ * A composable function that creates a custom button with a specific look and feel.
+ *
+ * @param text The text displayed on the button.
+ * @param onClick The function to be executed when the button is clicked.
+ */
+@Composable
+fun WaterButton(text: String, onClick: () -> Unit) {
+    val (width, height) = buttonSize()
+
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(Color(192, 219, 236)),
+        border = BorderStroke(1.dp, Color.Blue),
+        shape = RectangleShape,
+        modifier = Modifier
+            .padding(top = 10.dp)
+            .size(width, height)
+    ) {
+        Text(text, color = Color.Black)
+    }
+}
+
+/**
+ * A composable function that creates a set of custom buttons with specific labels.
+ * The arrangement of the buttons changes based on the screen orientation.
+ */
+@Composable
+fun WaterButtons() {
+    val isLandscape = isLandscape()
+    val buttonLabels = listOf("Water 250ml", "Water 300ml", "Water 500ml", "Add ml")
+    val spacerModifier = if (isLandscape) Modifier else Modifier.size(20.dp)
+
+    Spacer(modifier = spacerModifier)
+
+    Column(verticalArrangement = Arrangement.SpaceEvenly) {
+        buttonLabels.forEach { label ->
+            WaterButton(label) { /*TODO: Handle onClick*/ }
+            Spacer(modifier = if (isLandscape) Modifier.size(5.dp) else Modifier.size(30.dp))
+        }
+    }
+}
+
+@Composable
+fun HydrationCircle() {
+    val (blueSize, whiteSize) = circleSize()
+    Box(modifier = Modifier.size(blueSize), contentAlignment = Alignment.Center) {
+        // Bigger Blue Circle
+        Canvas(modifier = Modifier.matchParentSize()) {
+            drawCircle(color = Color.Blue)
+        }
+
+        // Smaller White Circle
+        Box(modifier = Modifier.size(whiteSize), contentAlignment = Alignment.Center) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                drawCircle(color = Color.White)
+            }
+
+            // Text inside the smaller circle
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "0%", style = TextStyle(fontSize = 20.sp))
+                Text(text = "0 ml", style = TextStyle(fontSize = 16.sp))
+                Text(text = "- 4000 ml", style = TextStyle(fontSize = 16.sp))
             }
         }
     }
@@ -66,39 +200,40 @@ var selectedButton by mutableStateOf("C")
 
 /**
  * @Composable function to create a row or column of buttons based on the screen orientation.
- * @param isPortrait Flag indicating whether the device is in portrait mode.
  */
 @Composable
-fun MyButtonsRow(isPortrait: Boolean) {
+fun MyButtonsRow() {
     val context = LocalContext.current
 
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = if (isPortrait) Arrangement.Bottom else Arrangement.Center,
-        horizontalAlignment = if (isPortrait) Alignment.CenterHorizontally else Alignment.End
+        verticalArrangement = if (isLandscape()) Arrangement.Center else Arrangement.Bottom,
+        horizontalAlignment = if (isLandscape()) Alignment.End else Alignment.CenterHorizontally
     ) {
-        if (isPortrait) {
+        if (!isLandscape()) {
             Divider(color = Color.Blue, thickness = 3.dp)
             Row(
-                modifier = Modifier.padding(10.dp),
+                modifier = Modifier.fillMaxWidth().background(Color.White),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
+                Spacer(modifier = Modifier.size(30.dp))
                 ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
-                Spacer(modifier = Modifier.size(30.dp))
+                Spacer(modifier = Modifier.size(10.dp))
                 ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
-                Spacer(modifier = Modifier.size(30.dp))
+                Spacer(modifier = Modifier.size(10.dp))
                 ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
+                Spacer(modifier = Modifier.size(30.dp))
             }
         } else {
             Column(
-                modifier = Modifier.padding(10.dp),
+                modifier = Modifier.fillMaxHeight().background(Color.White),
                 verticalArrangement = Arrangement.SpaceEvenly,
             ) {
+                Spacer(modifier = Modifier.size(30.dp))
                 ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
-                Spacer(modifier = Modifier.size(10.dp))
                 ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
-                Spacer(modifier = Modifier.size(10.dp))
                 ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
+                Spacer(modifier = Modifier.size(5.dp))
             }
         }
     }

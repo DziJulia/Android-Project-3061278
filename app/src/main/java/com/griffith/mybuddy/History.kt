@@ -12,16 +12,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,9 +34,7 @@ class History : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Box(modifier = Modifier.fillMaxSize().then(activityBackground)) {
-                val context = LocalContext.current
-                val isPortrait = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                MyButtonsRow(isPortrait = isPortrait)
+                MyButtonsRow()
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
 
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -53,7 +53,11 @@ class History : ComponentActivity() {
 fun TimeSelectionCard() {
     val (selectedButton, onButtonSelected) = remember { mutableStateOf("D") }
 
-    Card(modifier = Modifier.fillMaxWidth().height(40.dp)) {
+    Card(modifier = Modifier
+        .fillMaxWidth()
+        .height(40.dp)
+        .padding(end = if (isLandscape()) 70.dp else 0.dp)
+    ) {
         BoxWithConstraints {
             val buttonWidth = maxWidth / 4
 
@@ -67,6 +71,14 @@ fun TimeSelectionCard() {
     }
 }
 
+/**
+ * A composable function that creates a clickable button with a custom background color and text.
+ * @param text The text to be displayed on the button.
+ * @param width The width of the button.
+ * @param selected A boolean value that determines the background color of the button. If true, the background color is blue; otherwise, it's white.
+ * @param lastButton A boolean value that determines whether to draw a line on the button. If true, no line is drawn; otherwise, a line is drawn.
+ * @param onClick A lambda function that is invoked when the button is clicked.
+ */
 @Composable
 fun TimeSelectionButton(text: String, width: Dp, selected: Boolean = false, lastButton: Boolean = false, onClick: () -> Unit) {
     Box(
@@ -96,9 +108,18 @@ fun TimeSelectionButton(text: String, width: Dp, selected: Boolean = false, last
 
 @Composable
 fun GraphCard() {
-    Card(modifier = Modifier.fillMaxWidth().wrapContentHeight(Alignment.CenterVertically)) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = if (isLandscape()) 0.dp else 100.dp, end = if (isLandscape()) 70.dp else 0.dp)
+            .wrapContentHeight(Alignment.CenterVertically),
+    ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .background(Color.White)
+                .border(2.dp, Color(192, 226, 236)),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
@@ -129,9 +150,20 @@ fun GraphCard() {
                 }
             }
 
-            Text("Total", textAlign = TextAlign.Center)
-            Text("0 ml", textAlign = TextAlign.Center)
+            Divider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color =  Color(192, 226, 236),
+                thickness = 1.dp
+            )
+
+            Text("Total", textAlign = TextAlign.Start)
+            Text("0 ml", textAlign = TextAlign.Start)
             // TODO: Add graph here
         }
     }
+}
+
+@Composable
+fun isLandscape(): Boolean {
+    return LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 }
