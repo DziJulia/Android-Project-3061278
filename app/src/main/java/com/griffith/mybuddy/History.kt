@@ -49,6 +49,9 @@ class History : ComponentActivity() {
     }
 }
 
+/**
+ * A composable function that displays a card for selecting time intervals, such as days, weeks, months, and years.
+ */
 @Composable
 fun TimeSelectionCard() {
     val (selectedButton, onButtonSelected) = remember { mutableStateOf("D") }
@@ -106,6 +109,9 @@ fun TimeSelectionButton(text: String, width: Dp, selected: Boolean = false, last
     }
 }
 
+/**
+ * A composable function that displays a card containing a graph and associated UI elements.
+ */
 @Composable
 fun GraphCard() {
     Card(
@@ -163,6 +169,10 @@ fun GraphCard() {
     }
 }
 
+/**
+ * Function that checks whether the current device orientation is landscape.
+ * @return true if the device is in landscape orientation, false otherwise.
+ */
 @Composable
 fun isLandscape(): Boolean {
     return LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
