@@ -168,6 +168,9 @@ fun WaterButtons() {
     }
 }
 
+/**
+ * Function that displays a hydration circle with colored circles and text.
+ */
 @Composable
 fun HydrationCircle() {
     val (blueSize, whiteSize) = circleSize()
@@ -193,13 +196,12 @@ fun HydrationCircle() {
     }
 }
 
-
 // A mutable state variable that holds the value of the currently
 // selected button. It is initially set to "C".
 var selectedButton by mutableStateOf("C")
 
 /**
- * @Composable function to create a row or column of buttons based on the screen orientation.
+ * Function that displays a row of buttons, with dynamic arrangements based on the screen orientation.
  */
 @Composable
 fun MyButtonsRow() {
