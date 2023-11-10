@@ -54,6 +54,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 
+/**
+ * Julia Dobrovodska
+ * 3061278
+ * https://github.com/DziJulia/Android-Project-3061278
+ */
 class CurrentHydration : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
