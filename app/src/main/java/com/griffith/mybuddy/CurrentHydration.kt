@@ -74,7 +74,6 @@ class CurrentHydration : ComponentActivity() {
                         modifier = Modifier.align(Alignment.Start).padding(start = 10.dp),
                         style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold)
                     )
-                    Spacer(modifier = if (isLandscape()) Modifier else Modifier.size(30.dp))
                     if (isLandscape()) {
                         Row() {
                             Column(
@@ -96,6 +95,7 @@ class CurrentHydration : ComponentActivity() {
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 HydrationCircle()
+                                Spacer(modifier = Modifier.size(20.dp))
                                 WaterButtons()
                             }
                         }
@@ -166,9 +166,25 @@ fun WaterButtons() {
     Spacer(modifier = spacerModifier)
 
     Column(verticalArrangement = Arrangement.SpaceEvenly) {
-        buttonLabels.forEach { label ->
-            WaterButton(label) { /*TODO: Handle onClick*/ }
-            Spacer(modifier = if (isLandscape) Modifier.size(5.dp) else Modifier.size(30.dp))
+        if (isLandscape) {
+            buttonLabels.forEach { label ->
+                WaterButton(label) { /*TODO: Handle onClick*/ }
+                Spacer(modifier = Modifier.size(5.dp))
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column {
+                    WaterButton(buttonLabels[0]) {}
+                    WaterButton(buttonLabels[1]) {}
+                }
+                Column {
+                    WaterButton(buttonLabels[2]) {}
+                    WaterButton(buttonLabels[3]) {}
+                }
+            }
         }
     }
 }
