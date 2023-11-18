@@ -1,5 +1,6 @@
 package com.griffith.mybuddy
 
+import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 
@@ -20,5 +21,18 @@ class ExampleInstrumentedTest {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("com.griffith.mybuddy", appContext.packageName)
+    }
+}
+
+@RunWith(AndroidJUnit4::class)
+class CurrentHydrationTest {
+
+    @Test
+    fun testCurrentHydration() {
+        val scenario = ActivityScenario.launch(CurrentHydration::class.java)
+
+        scenario.onActivity { activity ->
+            // Add your assertions here
+        }
     }
 }

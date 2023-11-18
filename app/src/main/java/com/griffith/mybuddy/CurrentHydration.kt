@@ -1,8 +1,21 @@
 package com.griffith.mybuddy
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.Manifest
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.health.connect.datatypes.ExerciseRoute
+import android.location.Location
+import android.location.Location.distanceBetween
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -33,6 +46,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +66,20 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.net.URL
+import java.util.concurrent.Executors
 
 /**
  * Julia Dobrovodska
@@ -63,6 +90,7 @@ class CurrentHydration : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            WeatherRequest()
             Box(modifier = Modifier.fillMaxSize().then(activityBackground)) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -105,7 +133,156 @@ class CurrentHydration : ComponentActivity() {
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
             }
         }
+
     }
+}
+
+/**
+ * This is a Composable function that provides location updates.
+ * @param onLocationChanged A callback function that is invoked with the new
+ * location whenever the location changes.
+ * This function requests location updates from the LocationManager and invokes the provided
+ * callback function whenever the location changes. It automatically removes the
+ * location updates when the composable is disposed.
+ * Note: This function requests the ACCESS_FINE_LOCATION permission if it is not already granted.
+ * The calling code should handle the case where the user denies the permission request.
+ */
+@Composable
+fun LocationUpdates(onLocationChanged: (Location) -> Unit) {
+    val context = LocalContext.current
+    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager?
+
+    val locationListener = remember {
+        object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                onLocationChanged(location)
+            }
+
+            @Deprecated("Deprecated in Java")
+            override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
+            override fun onProviderEnabled(provider: String) {}
+            override fun onProviderDisabled(provider: String) {}
+        }
+    }
+
+    DisposableEffect(locationManager) {
+        // Check for permissions
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted
+            ActivityCompat.requestPermissions(context as Activity,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                99)
+        }
+
+        locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, locationListener)
+
+        onDispose {
+            locationManager?.removeUpdates(locationListener)
+        }
+    }
+}
+
+
+@Composable
+fun WeatherRequest() {
+    val API_KEY = "5e99e2e828c2a3d4b57fab4f8772528f"
+    val context = LocalContext.current
+    var weatherData by remember { mutableStateOf<JSONObject?>(null) }
+    var lastNotificationTime by remember { mutableStateOf<Long?>(0) }
+    //Variables for testing purposes to get notification
+    // var mexicoTestlong = "-86.84656"
+    // var mexicoTestlat = "21.17429"
+
+    // Don't SPam the user send it only every 90 minutes once we know it is too hot
+    // we do not need to do any extra requests.
+    if (System.currentTimeMillis() - lastNotificationTime!! >= 90 * 60 * 1000L) {
+        LocationUpdates { location ->
+            //Test check if im getting correct location
+            /**
+             * val geocodingUrl = "https://api.opencagedata.com/geocode/v1/json?q=${location.latitude}+${location.longitude}&key=64d3b25aa4da48c7a43665b24067b2e7"
+             * CoroutineScope(Dispatchers.IO).launch {
+             *  val locationData = fetchWeatherData(geocodingUrl)
+             *  val locationName = locationData.getJSONArray("results").getJSONObject(0).getJSONObject("components").getString("city")
+             *  Log.d("LocationName", "Location name: $locationName")
+             * }
+            */
+            val url =
+                "https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=$API_KEY"
+            CoroutineScope(Dispatchers.IO).launch {
+                weatherData = fetchWeatherData(url)
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(30 * 60 * 1000L)
+                //
+                //delay(60 * 1000L)
+            }
+        }
+
+        weatherData?.let {
+            val temperature = it.getJSONObject("main").getDouble("temp") - 273.15
+            if (temperature > 25) {
+                sendNotification(context)
+                lastNotificationTime = System.currentTimeMillis()
+            }
+        }
+    }
+}
+
+/**
+ * This is a suspending function that fetches weather data from a given URL.
+ * @param url The URL from which the weather data is to be fetched.
+ * It should be a valid URL string.
+ * @return A JSONObject containing the weather data fetched from the URL, or
+ * null if an error occurred. The structure of the JSONObject depends on the
+ * API used.
+ */
+suspend fun fetchWeatherData(url: String): JSONObject? {
+    return try {
+        val deferred = CoroutineScope(Dispatchers.IO).async {
+            val result = URL(url).readText()
+            JSONObject(result)
+        }
+        deferred.await()
+    } catch (e: Exception) {
+        // Log the exception
+        Log.d("error", "Error fetching data: ${e.message}")
+        null
+    }
+}
+
+/**
+ * Sends a hydration reminder notification to the user.
+ * @param context The application context. This is used to access system services and resources.
+ *
+ * This function creates a notification channel with high importance, then builds and sends a notification
+ * through this channel. The notification has a title of "Hydration Reminder" and a message reminding the user
+ * to drink water when the temperature is high. The notification icon is specified by `R.drawable.notification_icon`.
+ *
+ * Note: This function requires the `Manifest.permission.ACCESS_NOTIFICATION_POLICY` permission.
+ */
+fun sendNotification(context: Context) {
+    val channelId = "HydrationChannel"
+    val notificationChannel = NotificationChannel(
+        channelId,
+        "Hydration Notifications",
+        NotificationManager.IMPORTANCE_HIGH
+    )
+    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    notificationManager.createNotificationChannel(notificationChannel)
+
+    val notification = NotificationCompat.Builder(context, channelId)
+        .setContentTitle("Hydration Reminder")
+        .setContentText("The temperature is high. Don't forget to drink water!")
+        .setSmallIcon(R.drawable.drop)
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .build()
+
+    Log.d("Notification", "NOTIFICATION BEEING SET: $notification")
+    NotificationManagerCompat.from(context).notify(0, notification)
 }
 
 /**
@@ -132,7 +309,6 @@ fun circleSize(): Pair<Dp, Dp> {
 
 /**
  * A composable function that creates a custom button with a specific look and feel.
- *
  * @param text The text displayed on the button.
  * @param onClick The function to be executed when the button is clicked.
  */
@@ -315,43 +491,4 @@ fun IconImage(resourceId: Int, contentDescription: String, color: Color) {
         modifier = Modifier.size(size),
         colorFilter = ColorFilter.tint(color)
     )
-}
-
-/**
- * This is a composable function that creates a LogOut button. When the button is clicked,
- * an AlertDialog is shown to the user. After a delay, the user is redirected to the Login screen.
- * @param modifier Modifier for styling the LogOut button. Default value is Modifier.
- */
-@Composable
-fun LogOutButton(modifier: Modifier = Modifier) {
-    val showDialog = remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    if (showDialog.value) {
-        AlertDialog(
-            onDismissRequest = { },
-            title = { Text(text = "Log Out") },
-            text = { Text(text = "You have been successfully logged out!") },
-            confirmButton = { Row { } },
-            properties = DialogProperties(dismissOnClickOutside = false)
-        )
-
-        LaunchedEffect(showDialog.value) {
-            delay(2000)
-            showDialog.value = false
-            val intent = Intent(context, Login::class.java)
-            context.startActivity(intent)
-        }
-    }
-
-    Button(
-        onClick = { showDialog.value = true },
-        modifier = modifier.padding(top = 5.dp),
-        colors = ButtonDefaults.buttonColors(Color.Transparent),
-    ) {
-        IconImage(
-            R.drawable.logout,
-            "Logout",
-            Color.Black)
-    }
 }

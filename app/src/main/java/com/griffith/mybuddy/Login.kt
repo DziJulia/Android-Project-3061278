@@ -8,11 +8,14 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -21,6 +24,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.delay
 
 /**
  * Julia Dobrovodska
@@ -160,4 +165,43 @@ fun PasswordField() {
         onValueChange = { text.value = it },
         label = { Text("Password") }
     )
+}
+
+/**
+ * This is a composable function that creates a LogOut button. When the button is clicked,
+ * an AlertDialog is shown to the user. After a delay, the user is redirected to the Login screen.
+ * @param modifier Modifier for styling the LogOut button. Default value is Modifier.
+ */
+@Composable
+fun LogOutButton(modifier: Modifier = Modifier) {
+    val showDialog = remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    if (showDialog.value) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text(text = "Log Out") },
+            text = { Text(text = "You have been successfully logged out!") },
+            confirmButton = { Row { } },
+            properties = DialogProperties(dismissOnClickOutside = false)
+        )
+
+        LaunchedEffect(showDialog.value) {
+            delay(2000)
+            showDialog.value = false
+            val intent = Intent(context, Login::class.java)
+            context.startActivity(intent)
+        }
+    }
+
+    Button(
+        onClick = { showDialog.value = true },
+        modifier = modifier.padding(top = 5.dp),
+        colors = ButtonDefaults.buttonColors(Color.Transparent),
+    ) {
+        IconImage(
+            R.drawable.logout,
+            "Logout",
+            Color.Black)
+    }
 }
