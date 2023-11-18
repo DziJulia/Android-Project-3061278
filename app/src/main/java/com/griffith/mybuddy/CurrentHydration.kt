@@ -184,6 +184,12 @@ fun LocationUpdates(onLocationChanged: (Location) -> Unit) {
 }
 
 
+/**
+ * This function is responsible for fetching weather data and sending notifications to the user.
+ * It fetches the weather data for the user's current location every 30 minutes.
+ * If the temperature exceeds 25 degrees Celsius, it sends a notification to the user.
+ * The function also ensures that notifications are not sent more frequently than every 90 minutes.
+ */
 @Composable
 fun WeatherRequest() {
     val API_KEY = "5e99e2e828c2a3d4b57fab4f8772528f"
