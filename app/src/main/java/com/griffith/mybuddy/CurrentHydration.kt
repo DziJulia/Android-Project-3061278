@@ -376,6 +376,9 @@ fun WaterButtons() {
  */
 @Composable
 fun HydrationCircle() {
+    var hydrationLevel by remember { mutableStateOf(0) }
+    var hydrationGoal = 4000
+    val percentage = (hydrationLevel.toFloat() / hydrationGoal.toFloat()) * 100
     val (blueSize, whiteSize) = circleSize()
     Box(modifier = Modifier.size(blueSize), contentAlignment = Alignment.Center) {
         // Bigger Blue Circle
@@ -391,9 +394,9 @@ fun HydrationCircle() {
 
             // Text inside the smaller circle
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "0%", style = TextStyle(fontSize = 20.sp))
-                Text(text = "0 ml", style = TextStyle(fontSize = 16.sp))
-                Text(text = "- 4000 ml", style = TextStyle(fontSize = 16.sp))
+                Text(text = "$percentage %", style = TextStyle(fontSize = 20.sp))
+                Text(text = "$hydrationLevel ml", style = TextStyle(fontSize = 16.sp))
+                Text(text = "Goal: $hydrationGoal ml", style = TextStyle(fontSize = 16.sp))
             }
         }
     }
