@@ -82,6 +82,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.net.URL
+import java.util.Calendar
 import java.util.concurrent.Executors
 
 /**
@@ -94,6 +95,15 @@ class CurrentHydration : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             WeatherRequest()
+
+            //Reset hydration leve back to 0 every midnight
+            LaunchedEffect(key1 = hydrationLevel) {
+                while (true) {
+                    delay(getTimeUntilMidnight())
+                    hydrationLevel = 0
+                }
+            }
+
             Box(modifier = Modifier.fillMaxSize().then(activityBackground)) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -187,6 +197,22 @@ fun LocationUpdates(onLocationChanged: (Location) -> Unit) {
     }
 }
 
+/**
+ * Calculates the time until midnight in milliseconds.
+ * This function creates a Calendar instance representing the next midnight and subtracts the current time from it to get the time until midnight.
+ * @return The time until midnight in milliseconds.
+ */
+fun getTimeUntilMidnight(): Long {
+    val calendar = Calendar.getInstance().apply {
+        add(Calendar.DAY_OF_YEAR, 1)
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    val currentTime = Calendar.getInstance().timeInMillis
+    return calendar.timeInMillis - currentTime
+}
 
 /**
  * This function is responsible for fetching weather data and sending notifications to the user.
