@@ -8,19 +8,24 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -205,3 +210,106 @@ fun LogOutButton(modifier: Modifier = Modifier) {
             Color.Black)
     }
 }
+
+//Menu for the app
+/**
+ * @Composable function to create an image icon.
+ * @param resourceId The resource id of the image.
+ * @param contentDescription The content description of the image.
+ * @param color The color filter to apply to the image.
+ */
+@Composable
+fun IconImage(resourceId: Int, contentDescription: String, color: Color) {
+    val size = if (contentDescription == "Logout") 24.dp else 60.dp
+
+    Image(
+        painter = painterResource(id = resourceId),
+        contentDescription = contentDescription,
+        modifier = Modifier.size(size),
+        colorFilter = ColorFilter.tint(color)
+    )
+}
+
+/**
+ * @Composable function to create a button item in the row.
+ * @param text The text to display on the button.
+ * @param destination The destination class when the button is clicked.
+ * @param context The current context.
+ * @param isSelected Whether the button is currently selected.
+ * @param onSelected The action to perform when the button is selected.
+ */
+@Composable
+fun ButtonRowItem(text: String, destination: Class<*>, context: android.content.Context, isSelected: Boolean, onSelected: () -> Unit) {
+    val iconColor = if (isSelected) Color.Blue else Color.Black
+    val iconResource = when (text) {
+        "C" -> R.drawable.drop
+        "P" -> R.drawable.profile
+        "H" -> R.drawable.history
+        else -> null
+    }
+
+    Button(
+        onClick = {
+            val intent = Intent(context, destination)
+            context.startActivity(intent)
+            onSelected()
+        },
+        shape = CircleShape,
+        modifier = Modifier.size(70.dp),
+        colors = ButtonDefaults.buttonColors(Color.Transparent),
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        if (iconResource != null) {
+            IconImage(iconResource, text, iconColor)
+        } else {
+            Text(text)
+        }
+    }
+}
+
+
+// A mutable state variable that holds the value of the currently
+// selected button. It is initially set to "C".
+var selectedButton by mutableStateOf("C")
+
+/**
+ * Function that displays a row of buttons, with dynamic arrangements based on the screen orientation.
+ */
+@Composable
+fun MyButtonsRow() {
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = if (isLandscape()) Arrangement.Center else Arrangement.Bottom,
+        horizontalAlignment = if (isLandscape()) Alignment.End else Alignment.CenterHorizontally
+    ) {
+        if (!isLandscape()) {
+            Divider(color = Color.Blue, thickness = 3.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth().background(Color.White),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                Spacer(modifier = Modifier.size(30.dp))
+                ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
+                Spacer(modifier = Modifier.size(10.dp))
+                ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
+                Spacer(modifier = Modifier.size(10.dp))
+                ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
+                Spacer(modifier = Modifier.size(30.dp))
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxHeight().background(Color.White),
+                verticalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                Spacer(modifier = Modifier.size(30.dp))
+                ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
+                ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
+                ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
+                Spacer(modifier = Modifier.size(5.dp))
+            }
+        }
+    }
+}
+

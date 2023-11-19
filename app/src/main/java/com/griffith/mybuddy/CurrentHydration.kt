@@ -8,6 +8,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import androidx.compose.ui.graphics.SweepGradient
 import android.health.connect.datatypes.ExerciseRoute
 import android.location.Location
 import android.location.Location.distanceBetween
@@ -59,7 +60,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -468,18 +472,42 @@ var showDialog by mutableStateOf(false)
 @Composable
 fun HydrationCircle() {
     var hydrationGoal = 4000
-    val percentage = (hydrationLevel.toFloat() / hydrationGoal.toFloat()) * 100
+    // Rounding the number 2 decimals, since .round didnt work using this approach
+    val percentage = String.format("%.2f", (hydrationLevel.toFloat() / hydrationGoal.toFloat()) * 100).toFloat()
+    val borderColor = Color.Black
+    val progressColor = Color.Blue
+
     val (blueSize, whiteSize) = circleSize()
     Box(modifier = Modifier.size(blueSize), contentAlignment = Alignment.Center) {
         // Bigger Blue Circle
+        // This creates a Canvas composable that matches the size of its parent.
         Canvas(modifier = Modifier.matchParentSize()) {
-            drawCircle(color = Color.Blue)
+            // This draws an arc (a portion of a circle's circumference) within the Canvas.
+            // The arc represents the progress towards the hydration goal.
+            // The color of the arc is determined by the variable 'progressColor'.
+            // The arc starts at -90 degrees (the top of the circle) and its length
+            // (sweepAngle) is calculated based on the percentage of the hydration goal achieved.
+            // The 'useCenter' parameter is set to true, which means the arc will
+            // be a sector (a part of the circle enclosed by two radii and an arc).
+            drawArc(
+                color = progressColor,
+                startAngle = -90f,
+                sweepAngle = 360f * (percentage / 100f),
+                useCenter = true
+            )
+            // This draws a full circle on the border of the Canvas.
+            // The color of the circle is determined by the variable 'borderColor'.
+            // The 'style' parameter is set to Stroke, which means only the outline
+            // of the circle will be drawn.
+            // The width of the circle's outline is determined by '2.dp.toPx()'.
+            drawCircle(color = borderColor, style = Stroke(width = 2.dp.toPx()))
         }
 
         // Smaller White Circle
         Box(modifier = Modifier.size(whiteSize), contentAlignment = Alignment.Center) {
             Canvas(modifier = Modifier.matchParentSize()) {
                 drawCircle(color = Color.White)
+                drawCircle(color = borderColor, style = Stroke(width = 2.dp.toPx()))
             }
 
             // Text inside the smaller circle
@@ -492,102 +520,3 @@ fun HydrationCircle() {
     }
 }
 
-// A mutable state variable that holds the value of the currently
-// selected button. It is initially set to "C".
-var selectedButton by mutableStateOf("C")
-
-/**
- * Function that displays a row of buttons, with dynamic arrangements based on the screen orientation.
- */
-@Composable
-fun MyButtonsRow() {
-    val context = LocalContext.current
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = if (isLandscape()) Arrangement.Center else Arrangement.Bottom,
-        horizontalAlignment = if (isLandscape()) Alignment.End else Alignment.CenterHorizontally
-    ) {
-        if (!isLandscape()) {
-            Divider(color = Color.Blue, thickness = 3.dp)
-            Row(
-                modifier = Modifier.fillMaxWidth().background(Color.White),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                Spacer(modifier = Modifier.size(30.dp))
-                ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
-                Spacer(modifier = Modifier.size(10.dp))
-                ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
-                Spacer(modifier = Modifier.size(10.dp))
-                ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
-                Spacer(modifier = Modifier.size(30.dp))
-            }
-        } else {
-            Column(
-                modifier = Modifier.fillMaxHeight().background(Color.White),
-                verticalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                Spacer(modifier = Modifier.size(30.dp))
-                ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
-                ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
-                ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
-                Spacer(modifier = Modifier.size(5.dp))
-            }
-        }
-    }
-}
-
-/**
- * @Composable function to create a button item in the row.
- * @param text The text to display on the button.
- * @param destination The destination class when the button is clicked.
- * @param context The current context.
- * @param isSelected Whether the button is currently selected.
- * @param onSelected The action to perform when the button is selected.
- */
-@Composable
-fun ButtonRowItem(text: String, destination: Class<*>, context: android.content.Context, isSelected: Boolean, onSelected: () -> Unit) {
-    val iconColor = if (isSelected) Color.Blue else Color.Black
-    val iconResource = when (text) {
-        "C" -> R.drawable.drop
-        "P" -> R.drawable.profile
-        "H" -> R.drawable.history
-        else -> null
-    }
-
-    Button(
-        onClick = {
-            val intent = Intent(context, destination)
-            context.startActivity(intent)
-            onSelected()
-        },
-        shape = CircleShape,
-        modifier = Modifier.size(70.dp),
-        colors = ButtonDefaults.buttonColors(Color.Transparent),
-        contentPadding = PaddingValues(0.dp)
-    ) {
-        if (iconResource != null) {
-            IconImage(iconResource, text, iconColor)
-        } else {
-            Text(text)
-        }
-    }
-}
-
-/**
- * @Composable function to create an image icon.
- * @param resourceId The resource id of the image.
- * @param contentDescription The content description of the image.
- * @param color The color filter to apply to the image.
- */
-@Composable
-fun IconImage(resourceId: Int, contentDescription: String, color: Color) {
-    val size = if (contentDescription == "Logout") 24.dp else 60.dp
-
-    Image(
-        painter = painterResource(id = resourceId),
-        contentDescription = contentDescription,
-        modifier = Modifier.size(size),
-        colorFilter = ColorFilter.tint(color)
-    )
-}
