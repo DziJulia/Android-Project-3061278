@@ -147,6 +147,7 @@ class CurrentHydration : ComponentActivity() {
  * This function requests location updates from the LocationManager and invokes the provided
  * callback function whenever the location changes. It automatically removes the
  * location updates when the composable is disposed.
+ *
  * Note: This function requests the ACCESS_FINE_LOCATION permission if it is not already granted.
  * The calling code should handle the case where the user denies the permission request.
  */
