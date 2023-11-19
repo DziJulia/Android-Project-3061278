@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.Manifest
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.pm.PackageManager
@@ -37,6 +36,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -45,9 +45,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,6 +64,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -336,21 +339,65 @@ fun WaterButton(text: String, onClick: () -> Unit) {
 }
 
 /**
+ * This is a composable function that displays a dialog for the user to input a custom amount.
+ * The dialog contains a text field where the user can input a number, and two buttons for confirmation and dismissal.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomAmountDialog(context: Context) {
+    var customAmount by remember { mutableStateOf("") }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text(text = "Add Custom Amount") },
+            text = {
+                TextField(
+                    value = customAmount,
+                    onValueChange = { customAmount = it },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (customAmount.toIntOrNull() != null) {
+                        hydrationLevel += customAmount.toInt()
+                        showDialog = false
+                    } else {
+                        //Handle of non numeric input
+                        Toast.makeText(context, "Please enter a valid number", Toast.LENGTH_SHORT).show()
+                    } }) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+/**
  * A composable function that creates a set of custom buttons with specific labels.
  * The arrangement of the buttons changes based on the screen orientation.
  */
 @Composable
 fun WaterButtons() {
+    val context = LocalContext.current
     val isLandscape = isLandscape()
     val buttonLabels = listOf("Water 250ml", "Water 300ml", "Water 500ml", "Add ml")
     val spacerModifier = if (isLandscape) Modifier else Modifier.size(20.dp)
 
     Spacer(modifier = spacerModifier)
 
+    CustomAmountDialog(context)
+
     Column(verticalArrangement = Arrangement.SpaceEvenly) {
         if (isLandscape) {
             buttonLabels.forEach { label ->
-                WaterButton(label) { /*TODO: Handle onClick*/ }
+                WaterButton(label) { }
                 Spacer(modifier = Modifier.size(5.dp))
             }
         } else {
@@ -359,12 +406,12 @@ fun WaterButtons() {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 Column {
-                    WaterButton(buttonLabels[0]) {}
-                    WaterButton(buttonLabels[1]) {}
+                    WaterButton(buttonLabels[0]) { hydrationLevel += 250 }
+                    WaterButton(buttonLabels[1]) { hydrationLevel += 300 }
                 }
                 Column {
-                    WaterButton(buttonLabels[2]) {}
-                    WaterButton(buttonLabels[3]) {}
+                    WaterButton(buttonLabels[2]) { hydrationLevel += 500 }
+                    WaterButton(buttonLabels[3]) { showDialog = true }
                 }
             }
         }
@@ -372,11 +419,27 @@ fun WaterButtons() {
 }
 
 /**
+ * `hydrationLevel` is a mutable state that holds the current hydration level.
+ * It's an integer that increases based on the amount of water intake.
+ * This state is observed by Jetpack Compose and any changes to this state
+ * will recompose all composables that read this state.
+ */
+var hydrationLevel by mutableStateOf(0)
+
+/**
+ * `showDialog` is a mutable state that controls the visibility of the dialog.
+ * When `showDialog` is true, the dialog is visible. When `showDialog` is false,
+ * the dialog is dismissed. This state is observed by Jetpack Compose and any changes
+ * to this state will recompose all composables that read this state.
+ */
+var showDialog by mutableStateOf(false)
+
+
+/**
  * Function that displays a hydration circle with colored circles and text.
  */
 @Composable
 fun HydrationCircle() {
-    var hydrationLevel by remember { mutableStateOf(0) }
     var hydrationGoal = 4000
     val percentage = (hydrationLevel.toFloat() / hydrationGoal.toFloat()) * 100
     val (blueSize, whiteSize) = circleSize()
