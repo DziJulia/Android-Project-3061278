@@ -58,6 +58,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
@@ -71,6 +73,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.ActivityCompat
@@ -88,6 +91,7 @@ import org.json.JSONObject
 import java.net.URL
 import java.util.Calendar
 import java.util.concurrent.Executors
+import kotlin.math.min
 
 /**
  * Julia Dobrovodska
@@ -427,8 +431,13 @@ fun WaterButtons() {
 
     Column(verticalArrangement = Arrangement.SpaceEvenly) {
         if (isLandscape) {
-            buttonLabels.forEach { label ->
-                WaterButton(label) { }
+            buttonLabels.forEachIndexed { index, label ->
+                when (index) {
+                    0 -> WaterButton(label) { hydrationLevel += 250 }
+                    1 -> WaterButton(label) { hydrationLevel += 300 }
+                    2 -> WaterButton(label) { hydrationLevel += 500 }
+                    3 -> WaterButton(label) { showDialog = true }
+                }
                 Spacer(modifier = Modifier.size(5.dp))
             }
         } else {
@@ -482,6 +491,18 @@ fun HydrationCircle() {
         // Bigger Blue Circle
         // This creates a Canvas composable that matches the size of its parent.
         Canvas(modifier = Modifier.matchParentSize()) {
+            // Calculate the diameter of the circle. The diameter is the smaller of the canvas's width and height.
+            // This ensures that the circle will fit within the canvas, regardless of its orientation.
+            val diameter = min(size.width, size.height)
+            // Calculate the offset of the top left corner of the square that will contain the circle.
+            // The offset is calculated for both the x (horizontal) and y (vertical) directions.
+            // This is done to ensure that the circle is centered in the canvas.
+            val topLeftOffset = Offset((size.width - diameter) / 2, (size.height - diameter) / 2)
+            // Create a new Size object that represents the size of the square that will contain the circle.
+            // Both the width and height of the square are equal to the diameter of the circle.
+            // This square provides the bounds for the circle and arc that will be drawn.
+            val size = Size(diameter, diameter)
+
             // This draws an arc (a portion of a circle's circumference) within the Canvas.
             // The arc represents the progress towards the hydration goal.
             // The color of the arc is determined by the variable 'progressColor'.
@@ -491,8 +512,10 @@ fun HydrationCircle() {
             // be a sector (a part of the circle enclosed by two radii and an arc).
             drawArc(
                 color = progressColor,
-                startAngle = -90f,
+                startAngle = -270f,
                 sweepAngle = 360f * (percentage / 100f),
+                topLeft = topLeftOffset,
+                size = size,
                 useCenter = true
             )
             // This draws a full circle on the border of the Canvas.
