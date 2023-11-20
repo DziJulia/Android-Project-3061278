@@ -257,7 +257,7 @@ fun WeatherRequest() {
         LaunchedEffect(Unit) {
             while (true) {
                 delay(30 * 60 * 1000L)
-                //
+                // TEST to make the api request shorter every minute
                 //delay(60 * 1000L)
             }
         }
@@ -358,8 +358,8 @@ fun WaterButton(text: String, onClick: () -> Unit) {
 
     Button(
         onClick = onClick,
-        colors = ButtonDefaults.buttonColors(Color(192, 219, 236)),
-        border = BorderStroke(1.dp, Color.Blue),
+        colors = ButtonDefaults.buttonColors(buttonBackgroundColor),
+        border = BorderStroke(1.dp, deepSkyBlueColor),
         shape = RectangleShape,
         modifier = Modifier
             .padding(top = 10.dp)
@@ -475,7 +475,7 @@ fun HydrationCircle() {
     // Rounding the number 2 decimals, since .round didnt work using this approach
     val percentage = String.format("%.2f", (hydrationLevel.toFloat() / hydrationGoal.toFloat()) * 100).toFloat()
     val borderColor = Color.Black
-    val progressColor = Color.Blue
+    val progressColor = deepSkyBlueColor
 
     val (blueSize, whiteSize) = circleSize()
     Box(modifier = Modifier.size(blueSize), contentAlignment = Alignment.Center) {
