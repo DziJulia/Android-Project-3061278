@@ -57,4 +57,52 @@ class ExampleUnitTest {
         // Check that the time until midnight is less than 24 hours
         assertTrue(timeUntilMidnight < TimeUnit.DAYS.toMillis(1))
     }
+
+    /**
+     * Validation of password test
+     */
+    @Test
+    fun testIsValidatePassword() {
+        val password1 = "Password123!"
+        val password2 = "pass"
+        val password3 = "PasswordWithoutSpecialChar1"
+        val password4 = "password123"
+        val password5 = "PASSWORD!"
+        val password6 = "Password 123!"
+
+        val result1 = password1.isValidatePassword()
+        val result2 = password2.isValidatePassword()
+        val result3 = password3.isValidatePassword()
+        val result4 = password4.isValidatePassword()
+        val result5 = password5.isValidatePassword()
+        val result6 = password6.isValidatePassword()
+
+        assertEquals("", result1)
+        assertEquals(ERR_LEN, result2)
+        assertEquals(ERR_SPECIAL, result3)
+        assertEquals(ERR_UPPER, result4)
+        assertEquals(ERR_DIGIT, result5)
+        assertEquals(ERR_WHITESPACE, result6)
+    }
+
+    /**
+     * Validation of email test
+     */
+    @Test
+    fun testIsValidateEmail() {
+        val notValidEmail1 = "email"
+        val notValidEmail2 = "pass@"
+        val notValidEmail3 = "pass@email"
+        val validEmail = "email@email.com"
+
+        val result1 = notValidEmail1.isValidEmail()
+        val result2 = notValidEmail2.isValidEmail()
+        val result3 = notValidEmail3.isValidEmail()
+        val result4 = validEmail.isValidEmail()
+
+        assertEquals(false, result1)
+        assertEquals(false, result2)
+        assertEquals(false, result3)
+        assertEquals(true, result4)
+    }
 }
