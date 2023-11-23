@@ -93,7 +93,7 @@ fun TimeSelectionButton(text: String, width: Dp, selected: Boolean = false, last
         modifier = Modifier
             .requiredWidth(width)
             .clickable(onClick = onClick)
-            .background(color = if (selected) Color.Blue else Color.White)
+            .background(color = if (selected) deepSkyBlueColor else Color.White)
             .padding(top = 2.dp, bottom = 2.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -109,7 +109,7 @@ fun TimeSelectionButton(text: String, width: Dp, selected: Boolean = false, last
         }
         Text(
             text = text,
-            color = if (selected) Color.White else Color.Black
+            color = if (selected) Color.Blue else Color.Black
         )
     }
 }

@@ -43,6 +43,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
@@ -88,6 +89,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.lang.Integer.max
 import java.net.URL
 import java.util.Calendar
 import java.util.concurrent.Executors
@@ -394,20 +396,31 @@ fun CustomAmountDialog(context: Context) {
                 )
             },
             confirmButton = {
-                Button(onClick = {
-                    if (customAmount.toIntOrNull() != null) {
-                        hydrationLevel += customAmount.toInt()
-                        showDialog = false
-                    } else {
-                        //Handle of non numeric input
-                        Toast.makeText(context, "Please enter a valid number", Toast.LENGTH_SHORT).show()
-                    } }) {
-                    Text("Confirm")
+                Button(
+                    onClick = {
+                        if (customAmount.toIntOrNull() != null) {
+                            hydrationLevel += customAmount.toInt()
+                            showDialog = false
+                        } else {
+                            //Handle of non numeric input
+                            Toast.makeText(
+                                context,
+                                "Please enter a valid number",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(deepSkyBlueColor)
+                ) {
+                    Text(text = "Confirm", color = Color.Black)
                 }
             },
             dismissButton = {
-                Button(onClick = { showDialog = false }) {
-                    Text("Cancel")
+                Button(
+                    onClick = { showDialog = false },
+                    colors = ButtonDefaults.buttonColors(deepSkyBlueColor)
+                ) {
+                    Text(text = "Cancel", color = Color.Black)
                 }
             }
         )
@@ -480,9 +493,9 @@ var showDialog by mutableStateOf(false)
  */
 @Composable
 fun HydrationCircle() {
-    var hydrationGoal = 4000
+    val goalHydration = max(0, hydrationGoal.value.toInt()).toString()
     // Rounding the number 2 decimals, since .round didnt work using this approach
-    val percentage = String.format("%.2f", (hydrationLevel.toFloat() / hydrationGoal.toFloat()) * 100).toFloat()
+    val percentage = String.format("%.2f", (hydrationLevel.toFloat() / goalHydration.toFloat()) * 100).toFloat()
     val borderColor = Color.Black
     val progressColor = deepSkyBlueColor
 
@@ -537,7 +550,8 @@ fun HydrationCircle() {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "$percentage %", style = TextStyle(fontSize = 20.sp))
                 Text(text = "$hydrationLevel ml", style = TextStyle(fontSize = 16.sp))
-                Text(text = "Goal: $hydrationGoal ml", style = TextStyle(fontSize = 16.sp))
+                val displayText = if (goalHydration.toInt() < 0) "Goal: -$goalHydration ml" else "Goal: $goalHydration ml"
+                Text(text = displayText, style = TextStyle(fontSize = 16.sp))
             }
         }
     }
