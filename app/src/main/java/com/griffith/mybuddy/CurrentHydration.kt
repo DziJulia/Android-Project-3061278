@@ -493,9 +493,15 @@ var showDialog by mutableStateOf(false)
  */
 @Composable
 fun HydrationCircle() {
-    val goalHydration = max(0, hydrationGoal.value.toInt()).toString()
+    val goalHydration = max(0, hydrationGoal.value.toInt())
     // Rounding the number 2 decimals, since .round didnt work using this approach
-    val percentage = String.format("%.2f", (hydrationLevel.toFloat() / goalHydration.toFloat()) * 100).toFloat()
+    val percentage = if (goalHydration.toFloat() != 0f) {
+        val tempPercentage = String.format("%.2f", (hydrationLevel.toFloat() / goalHydration.toFloat()) * 100).toFloat()
+        if (tempPercentage > 100f) 100f else tempPercentage
+    } else {
+        0f
+    }
+
     val borderColor = Color.Black
     val progressColor = deepSkyBlueColor
 
