@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -71,11 +72,25 @@ class Profile : ComponentActivity() {
     }
 }
 
+/**
+ * `weight, height, hydrationGoal` is a mutable state that holds the current information of user.
+ * It's an integer that increases based on the amount of water intake.
+ * This state is observed by Jetpack Compose and any changes to this state
+ * will recompose all composable that read this state.
+ */
 var weight =  mutableStateOf("0")
 var height =  mutableStateOf("0")
-var activityLevel =  mutableStateOf("")
 var hydrationGoal = mutableStateOf("0")
+/**
+ * `activityLevel, gender` is a mutable state that holds the current information of user.
+ * It's an string. This state is observed by Jetpack Compose and any changes to this state
+ * will recompose all composable that read this state.
+ */
+var activityLevel =  mutableStateOf("")
 var gender = mutableStateOf("")
+/**
+ * `hydrationGoalManuallySet` is a mutable state that holds boolean that check for user input.
+ */
 var hydrationGoalManuallySet = mutableStateOf(false)
 
 
@@ -86,9 +101,7 @@ var hydrationGoalManuallySet = mutableStateOf(false)
 @Composable
 fun ProfileForm() {
     val scrollState = rememberScrollState()
-    val formBackground = Modifier
-        .fillMaxSize()
-        .border(width = 3.dp, color = Color.LightGray)
+    val formBackground =  Modifier.fillMaxSize().border(width = 3.dp, color = Color.LightGray)
 
     Column(
         modifier = Modifier
@@ -98,83 +111,128 @@ fun ProfileForm() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.size(15.dp))
+        AddSpacer(size = 15.dp)
         Card(modifier = formBackground) {
-             val name = remember { mutableStateOf("") }
-            FormField(label = "Name", value = name)
-            Divider(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                color = Color.LightGray,
-                thickness = 1.dp
-            )
-
-            FormField(label = "Gender", value = gender)
-            Divider(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                color = Color.LightGray,
-                thickness = 1.dp
-            )
-
-            FormField(label = "Weight", value = weight )
-            Divider(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                color = Color.LightGray,
-                thickness = 1.dp
-            )
-
-            FormField(label = "Height", value = height)
-            Divider(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                color = Color.LightGray,
-                thickness = 1.dp
-            )
-
-            FormField(label = "Activity Level", value = activityLevel)
+            CreateFormFields()
         }
 
-        Spacer(modifier = Modifier.size(30.dp))
+        AddSpacer(size = 30.dp)
 
         Text("Water Intake Goal", style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold))
-        Spacer(modifier = Modifier.size(6.dp))
-        val activityLevelTransformed = transformActivityLevel(activityLevel.value)
-        if (!hydrationGoalManuallySet.value) {
-            hydrationGoal.value = calculateRecommendedWaterIntake(
-                try {
-                    weight.value.toInt()
-                } catch (e: NumberFormatException) {
-                    0
-                },
-                try {
-                    height.value.toInt()
-                } catch (e: NumberFormatException) {
-                    0
-                },
-                activityLevelTransformed,
-                gender.value
-            )
-        }
-
-        Card(modifier = formBackground ) {
-            FormField(
-                label = "Water Intake Goal",
-                value = hydrationGoal,
-                onValueChange = { hydrationGoalManuallySet.value = true }
-            )
-        }
-
-        if (hydrationGoalManuallySet.value) {
-            Button(
-                onClick = { hydrationGoalManuallySet.value = false },
-                colors = ButtonDefaults.buttonColors(Color.Transparent),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text("Recalculate", color = Color.Blue)
-            }
-        }
-
+        AddSpacer(size = 6.dp)
+        HandleHydrationGoal(formBackground)
     }
 }
 
+/**
+ * @param size Size of the spacer
+ * Adds a spacer to the form
+ */
+@Composable
+fun AddSpacer(size: Dp) {
+    Spacer(modifier = Modifier.size(size))
+}
+
+/**
+ * Adds a divider to the form
+ */
+@Composable
+fun AddDivider() {
+    Divider(
+        modifier = Modifier.padding(horizontal = 20.dp),
+        color = Color.LightGray,
+        thickness = 1.dp
+    )
+}
+
+/**
+ * Creates form fields
+ */
+@Composable
+fun CreateFormFields() {
+    val name = remember { mutableStateOf("") }
+    FormField(label = "Name", value = name)
+    AddDivider()
+
+    FormField(label = "Gender", value = gender)
+    AddDivider()
+
+    FormField(label = "Weight", value = weight )
+    AddDivider()
+
+    FormField(label = "Height", value = height)
+    AddDivider()
+
+    FormField(label = "Activity Level", value = activityLevel)
+}
+
+
+/**
+ * @param back Modifier for form background
+ * Handles hydration goal
+ */
+@Composable
+fun HandleHydrationGoal(back: Modifier) {
+    val activityLevelTransformed = transformActivityLevel(activityLevel.value)
+    if (!hydrationGoalManuallySet.value) {
+        hydrationGoal.value = calculateRecommendedWaterIntake(
+            try {
+                weight.value.toInt()
+            } catch (e: NumberFormatException) {
+                0
+            },
+            try {
+                height.value.toInt()
+            } catch (e: NumberFormatException) {
+                0
+            },
+            activityLevelTransformed,
+            gender.value
+        )
+    }
+
+    Card(modifier = back ) {
+        HandleHydrationGoalFormField()
+    }
+
+    if (hydrationGoalManuallySet.value) {
+        Button(
+            onClick = { hydrationGoalManuallySet.value = false },
+            colors = ButtonDefaults.buttonColors(Color.Transparent),
+            contentPadding = PaddingValues(0.dp)
+        ) {
+            Text("Recalculate", color = Color.Blue)
+        }
+    }
+}
+
+/**
+ * Handles hydration goal form field
+ */
+@Composable
+fun HandleHydrationGoalFormField() {
+    FormField(
+        label = "Water Intake Goal",
+        value = hydrationGoal,
+        onValueChange = {
+            //need to catch if input value is not nil
+            try {
+                if (it.toInt() != 0) {
+                    hydrationGoal.value = it
+                    hydrationGoalManuallySet.value = true
+                }
+            } catch (e: Exception) {
+                hydrationGoal.value = "0"
+            }
+        }
+    )
+}
+
+/**
+ * Transforms the activity level from a string to a corresponding float value.
+ * @param activityLevel The activity level as a string. It can be "Highly Active", "Moderately Active", "Lightly Active", or any other string.
+ * @return The corresponding float value for the activity level. It returns HIGHLY_ACTIVE for "Highly Active", MODERATELY_ACTIVE for "Moderately Active", LIGHTLY_ACTIVE for "Lightly Active", and NO_ACTIVE for any other string.
+ */
 fun transformActivityLevel(activityLevel: String): Float {
     return when (activityLevel) {
         "Highly Active" -> HIGHLY_ACTIVE
@@ -183,7 +241,6 @@ fun transformActivityLevel(activityLevel: String): Float {
         else -> NO_ACTIVE
     }
 }
-
 
 /**
  * This function creates a form field with a label and a value. It also manages a dialog state.
