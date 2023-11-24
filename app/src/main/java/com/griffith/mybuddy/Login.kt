@@ -205,7 +205,6 @@ fun SetupUI(navController: NavController) {
                     ) {
                         Text("Forgot Password")
                     }
-                    Spacer(modifier = Modifier.padding(vertical = 10.dp))
                     Button(onClick = {
                         val intent = Intent(context, CurrentHydration::class.java)
                         context.startActivity(intent)
@@ -266,6 +265,7 @@ fun RegistrationScreen(navController: NavController) {
         NameField(emailAddress)
         PasswordField(password1)
         PasswordField(password2)
+        Spacer(modifier = Modifier.padding(vertical = 10.dp))
         Button(
             onClick = {
                 // Validation of input
@@ -288,10 +288,11 @@ fun RegistrationScreen(navController: NavController) {
                     // TODO Handle registration
                 }
             },
-            colors = ButtonDefaults.buttonColors(
-                Color.Transparent,
-                contentColor = Color.Black
-            )
+           colors = ButtonDefaults.buttonColors(
+               deepSkyBlueColor,
+               contentColor = Color.Black
+            ),
+            modifier = Modifier.height(50.dp).width(200.dp)
         ) {
             Text("Register")
         }
