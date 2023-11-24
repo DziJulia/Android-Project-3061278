@@ -276,10 +276,10 @@ fun RegistrationScreen(navController: NavController) {
                 else if (!emailAddress.value.isValidEmail()){
                     Toast.makeText(context, ERR_NOT_VALID, Toast.LENGTH_SHORT).show()
                 }
-                else if (!password1.value.isValidatePassword().isEmpty()){
+                else if (password1.value.isValidatePassword().isNotEmpty()){
                     Toast.makeText(context, password1.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
                 }
-                else if (!password2.value.isValidatePassword().isEmpty()){
+                else if (password2.value.isValidatePassword().isNotEmpty()){
                     Toast.makeText(context, password2.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
                 }
                 else if (password1.value != password2.value) {
@@ -363,12 +363,12 @@ fun String.isValidatePassword(): String {
  */
 fun String.isValidEmail(): Boolean {
     val emailAddress = Pattern.compile(
-        "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" +
-                "\\@" +
-                "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
+        "[a-zA-Z0-9+_.%-]{1,256}" +
+                "@" +
+                "[a-zA-Z0-9-]{0,64}" +
                 "(" +
                 "\\." +
-                "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
+                "[a-zA-Z0-9-]{0,25}" +
                 ")+"
     )
 
