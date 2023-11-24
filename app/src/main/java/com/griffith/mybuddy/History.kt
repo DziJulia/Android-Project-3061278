@@ -47,8 +47,8 @@ class History : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val selectedDate = remember { mutableStateOf(Date()) } // The selected date
-            val selectedButton = remember { mutableStateOf("D") } // The selected button
+            val selectedDate = remember { mutableStateOf(Date()) }
+            val selectedButton = remember { mutableStateOf("D") }
 
             Box(modifier = Modifier
                 .fillMaxSize()
@@ -58,10 +58,10 @@ class History : ComponentActivity() {
 
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("History", style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold))
-                    Spacer(modifier = Modifier.size(25.dp))
-                    TimeSelectionCard(selectedDate, selectedButton) // Pass it here
-                    Spacer(modifier = Modifier.height(20.dp))
-                    GraphCard(selectedDate, selectedButton) // And here
+                    AddSpacer(25.dp)
+                    TimeSelectionCard(selectedDate, selectedButton)
+                    AddSpacer(20.dp)
+                    GraphCard(selectedDate, selectedButton)
                 }
             }
         }
@@ -117,7 +117,7 @@ fun TimeSelectionButton(text: String, width: Dp, selected: Boolean = false, sele
             .requiredWidth(width)
             .clickable(onClick = {
                 onClick()
-                selectedDate.value = newSelectedDate // Update the selected date here
+                selectedDate.value = newSelectedDate
                 println("Selected date: $newSelectedDate")
             })
             .background(color = if (selected) deepSkyBlueColor else Color.White)
@@ -250,7 +250,7 @@ fun WaterIntakeGraph() {
         .fillMaxWidth()
         .fillMaxHeight()) {
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(0.90f))
         for (i in 0 until increments) {
             val currentIncrement = min(1000f, graphData - i * 1000)
 

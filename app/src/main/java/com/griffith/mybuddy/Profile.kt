@@ -60,7 +60,7 @@ class Profile : ComponentActivity() {
                 MyButtonsRow()
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
                 Column(modifier = Modifier.padding(16.dp, end = if (isLandscape()) 70.dp else 0.dp)) {
-                    Spacer(modifier = Modifier.size(20.dp))
+                    AddSpacer(20.dp)
                     Text(
                         "Profile",
                         style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold)

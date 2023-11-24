@@ -119,7 +119,7 @@ class CurrentHydration : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = if (isLandscape()) Alignment.Start else Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.size(20.dp))
+                    AddSpacer(20.dp)
                     Text(
                         "Current Hydration",
                         modifier = Modifier.align(Alignment.Start).padding(start = 10.dp),
@@ -146,7 +146,7 @@ class CurrentHydration : ComponentActivity() {
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 HydrationCircle()
-                                Spacer(modifier = Modifier.size(20.dp))
+                                AddSpacer(20.dp)
                                 WaterButtons()
                             }
                         }
@@ -434,16 +434,13 @@ fun CustomAmountDialog(context: Context) {
 @Composable
 fun WaterButtons() {
     val context = LocalContext.current
-    val isLandscape = isLandscape()
     val buttonLabels = listOf("Water 250ml", "Water 300ml", "Water 500ml", "Add ml")
-    val spacerModifier = if (isLandscape) Modifier else Modifier.size(20.dp)
-
-    Spacer(modifier = spacerModifier)
+    if (!isLandscape()) { AddSpacer(20.dp) }
 
     CustomAmountDialog(context)
 
     Column(verticalArrangement = Arrangement.SpaceEvenly) {
-        if (isLandscape) {
+        if (isLandscape()) {
             buttonLabels.forEachIndexed { index, label ->
                 when (index) {
                     0 -> WaterButton(label) { hydrationLevel += 250 }
@@ -451,7 +448,7 @@ fun WaterButtons() {
                     2 -> WaterButton(label) { hydrationLevel += 500 }
                     3 -> WaterButton(label) { showDialog = true }
                 }
-                Spacer(modifier = Modifier.size(5.dp))
+                AddSpacer(5.dp)
             }
         } else {
             Row(

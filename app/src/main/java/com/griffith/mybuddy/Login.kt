@@ -560,24 +560,24 @@ fun MyButtonsRow() {
                 modifier = Modifier.fillMaxWidth().background(Color.White),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Spacer(modifier = Modifier.size(30.dp))
+                AddSpacer(30.dp)
                 ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
-                Spacer(modifier = Modifier.size(10.dp))
+                AddSpacer(10.dp)
                 ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
-                Spacer(modifier = Modifier.size(10.dp))
+                AddSpacer(10.dp)
                 ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
-                Spacer(modifier = Modifier.size(30.dp))
+                AddSpacer(30.dp)
             }
         } else {
             Column(
                 modifier = Modifier.fillMaxHeight().background(Color.White),
                 verticalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Spacer(modifier = Modifier.size(30.dp))
+                AddSpacer(30.dp)
                 ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
                 ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
                 ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
-                Spacer(modifier = Modifier.size(5.dp))
+                AddSpacer(5.dp)
             }
         }
     }
