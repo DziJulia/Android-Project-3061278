@@ -168,11 +168,11 @@ fun CreateFormFields() {
 
 
 /**
- * @param back Modifier for form background
+ * @param modifier Modifier for form background
  * Handles hydration goal
  */
 @Composable
-fun HandleHydrationGoal(back: Modifier) {
+fun HandleHydrationGoal(modifier: Modifier) {
     val activityLevelTransformed = transformActivityLevel(activityLevel.value)
     if (!hydrationGoalManuallySet.value) {
         hydrationGoal.value = calculateRecommendedWaterIntake(
@@ -191,7 +191,7 @@ fun HandleHydrationGoal(back: Modifier) {
         )
     }
 
-    Card(modifier = back ) {
+    Card(modifier = modifier ) {
         HandleHydrationGoalFormField()
     }
 
