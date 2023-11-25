@@ -244,31 +244,50 @@ fun WaterIntakeGraph() {
 
     // Calculate the number of increments (each increment is 1000ml)
     val increments = (goalData / 1000).toInt()
+    val remaining = goalData % 1000
 
     Column(modifier = Modifier
         .fillMaxWidth()
         .fillMaxHeight()) {
         Spacer(modifier = Modifier.weight(1f))
 
-        for (i in 0 until increments) {
-            val currentIncrement = min(1000f, graphData - i * 1000)
-            val remaining = goalData - i * 1000
+        if (remaining > 0) {
+            val currentIncrement = min(remaining, graphData - increments * 1000)
 
             Box(
                 modifier = Modifier
                     .height((currentIncrement / goalData) * 200.dp)
                     .fillMaxWidth()
-                    .background(if (remaining > 0 && currentIncrement > 0) deepSkyBlueColor else Color.Transparent),
+                    .background(if (currentIncrement > 0) deepSkyBlueColor else Color.Transparent),
                 contentAlignment = Alignment.TopCenter
             ) {
-                if (remaining > 0 && currentIncrement > 0) {
+                if (currentIncrement > 0) {
                     DashedDivider()
                     Text("${remaining.toInt()} ml", color = Color.DarkGray)
                 }
             }
         }
+
+        for (i in increments - 1 downTo 0) {
+            val currentIncrement = min(1000f, graphData - i * 1000)
+            val remainingGoal = (i + 1) * 1000f
+
+            Box(
+                modifier = Modifier
+                    .height((currentIncrement / goalData) * 200.dp)
+                    .fillMaxWidth()
+                    .background(if (remainingGoal > 0 && currentIncrement > 0) deepSkyBlueColor else Color.Transparent),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                if (remainingGoal > 0 && currentIncrement > 0) {
+                    DashedDivider()
+                    Text("${remainingGoal.toInt()} ml", color = Color.DarkGray)
+                }
+            }
+        }
     }
 }
+
 
 /**
  * This function creates a dashed divider line using the Canvas composable in Jetpack Compose.
