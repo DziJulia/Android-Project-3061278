@@ -237,8 +237,8 @@ fun WeatherRequest() {
     var weatherData by remember { mutableStateOf<JSONObject?>(null) }
     var lastNotificationTime by remember { mutableStateOf<Long?>(0) }
     //Variables for testing purposes to get notification
-    // var mexicoTestlong = "-86.84656"
-    // var mexicoTestlat = "21.17429"
+    //var mexicoTestlong = "-86.84656"
+    //var mexicoTestlat = "21.17429"
 
     // Don't SPam the user send it only every 90 minutes once we know it is too hot
     // we do not need to do any extra requests.
@@ -250,6 +250,7 @@ fun WeatherRequest() {
              * CoroutineScope(Dispatchers.IO).launch {
              *  val locationData = fetchWeatherData(geocodingUrl)
              *  val locationName = locationData.getJSONArray("results").getJSONObject(0).getJSONObject("components").getString("city")
+             *  Print out in log the localization name to make sure the sensor is implemented correctly
              *  Log.d("LocationName", "Location name: $locationName")
              * }
             */
