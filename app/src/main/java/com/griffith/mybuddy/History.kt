@@ -233,7 +233,6 @@ fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<Str
     }
 }
 
-
 /**
  * This function displays a water intake graph. The graph shows the user's current hydration level
  * and their hydration goal. Each increment in the graph represents 1000ml of water.
@@ -249,21 +248,22 @@ fun WaterIntakeGraph() {
     Column(modifier = Modifier
         .fillMaxWidth()
         .fillMaxHeight()) {
+        Spacer(modifier = Modifier.weight(1f))
 
-        Spacer(modifier = Modifier.weight(0.90f))
         for (i in 0 until increments) {
             val currentIncrement = min(1000f, graphData - i * 1000)
+            val remaining = graphData - i * 1000
 
             Box(
                 modifier = Modifier
                     .height((currentIncrement / goalData) * 200.dp)
                     .fillMaxWidth()
-                    .background(if (currentIncrement > 0) deepSkyBlueColor else Color.Transparent),
+                    .background(if (remaining > 0) deepSkyBlueColor else Color.Transparent),
                 contentAlignment = Alignment.TopCenter
             ) {
-                if (currentIncrement > 0) {
+                if (remaining > 0) {
                     DashedDivider()
-                    Text("${currentIncrement.toInt()} ml", color = Color.DarkGray)
+                    Text("${remaining.toInt()} ml", color = Color.DarkGray)
                 }
             }
         }

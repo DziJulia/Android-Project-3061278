@@ -444,7 +444,8 @@ fun SelectionPopup(label: String, value: MutableState<String>, options: List<Str
             }
             Button(
                 onClick = onDismiss,
-                modifier = Modifier.align(Alignment.End).padding(16.dp)
+                modifier = Modifier.align(Alignment.End).padding(16.dp),
+                colors = ButtonDefaults.buttonColors(deepSkyBlueColor)
             ) {
                 Text("Confirm")
             }
