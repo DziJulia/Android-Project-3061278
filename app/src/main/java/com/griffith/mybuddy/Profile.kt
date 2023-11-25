@@ -80,7 +80,7 @@ class Profile : ComponentActivity() {
  */
 var weight =  mutableStateOf("0")
 var height =  mutableStateOf("0")
-var hydrationGoal = mutableStateOf("0")
+var hydrationGoal = mutableStateOf("3000")
 /**
  * `activityLevel, gender` is a mutable state that holds the current information of user.
  * It's an string. This state is observed by Jetpack Compose and any changes to this state

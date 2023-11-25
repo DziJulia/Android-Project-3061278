@@ -492,7 +492,6 @@ var showDialog by mutableStateOf(false)
 fun HydrationCircle() {
     val goalHydration = max(0, hydrationGoal.value.toInt())
     val goalDecrease = hydrationGoal.value.toInt() - hydrationLevel
-    // Rounding the number 2 decimals, since .round didnt work using this approach
     val percentage = if (goalHydration.toFloat() != 0f) {
         val tempPercentage = String.format("%.2f", (hydrationLevel.toFloat() / goalHydration.toFloat()) * 100).toFloat()
         if (tempPercentage > 100f) 100f else tempPercentage

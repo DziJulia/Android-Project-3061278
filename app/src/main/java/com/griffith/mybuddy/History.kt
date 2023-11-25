@@ -252,16 +252,16 @@ fun WaterIntakeGraph() {
 
         for (i in 0 until increments) {
             val currentIncrement = min(1000f, graphData - i * 1000)
-            val remaining = graphData - i * 1000
+            val remaining = goalData - i * 1000
 
             Box(
                 modifier = Modifier
                     .height((currentIncrement / goalData) * 200.dp)
                     .fillMaxWidth()
-                    .background(if (remaining > 0) deepSkyBlueColor else Color.Transparent),
+                    .background(if (remaining > 0 && currentIncrement > 0) deepSkyBlueColor else Color.Transparent),
                 contentAlignment = Alignment.TopCenter
             ) {
-                if (remaining > 0) {
+                if (remaining > 0 && currentIncrement > 0) {
                     DashedDivider()
                     Text("${remaining.toInt()} ml", color = Color.DarkGray)
                 }
