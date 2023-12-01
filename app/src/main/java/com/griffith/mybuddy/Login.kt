@@ -529,11 +529,6 @@ fun ButtonRowItem(text: String, destination: Class<*>, context: android.content.
     }
 }
 
-
-// A mutable state variable that holds the value of the currently
-// selected button. It is initially set to "C".
-var selectedButton by mutableStateOf("C")
-
 /**
  * Function that displays a row of buttons, with dynamic arrangements based on the screen orientation.
  */
@@ -559,11 +554,11 @@ fun MyButtonsRow() {
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 AddSpacer(30.dp)
-                ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
+                ButtonRowItem("C", CurrentHydration::class.java, context, AppVariables.selectedButtonMenu == "C") { AppVariables.selectedButtonMenu = "C" }
                 AddSpacer(10.dp)
-                ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
+                ButtonRowItem("P", Profile::class.java, context, AppVariables.selectedButtonMenu == "P") { AppVariables.selectedButtonMenu = "P" }
                 AddSpacer(10.dp)
-                ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
+                ButtonRowItem("H", History::class.java, context, AppVariables.selectedButtonMenu == "H") { AppVariables.selectedButtonMenu = "H" }
                 AddSpacer(30.dp)
             }
         } else {
@@ -574,9 +569,9 @@ fun MyButtonsRow() {
                 verticalArrangement = Arrangement.SpaceEvenly,
             ) {
                 AddSpacer(30.dp)
-                ButtonRowItem("C", CurrentHydration::class.java, context, selectedButton == "C") { selectedButton = "C" }
-                ButtonRowItem("P", Profile::class.java, context, selectedButton == "P") { selectedButton = "P" }
-                ButtonRowItem("H", History::class.java, context, selectedButton == "H") { selectedButton = "H" }
+                ButtonRowItem("C", CurrentHydration::class.java, context, AppVariables.selectedButtonMenu == "C") { AppVariables.selectedButtonMenu = "C" }
+                ButtonRowItem("P", Profile::class.java, context, AppVariables.selectedButtonMenu == "P") { AppVariables.selectedButtonMenu = "P" }
+                ButtonRowItem("H", History::class.java, context, AppVariables.selectedButtonMenu == "H") { AppVariables.selectedButtonMenu = "H" }
                 AddSpacer(5.dp)
             }
         }

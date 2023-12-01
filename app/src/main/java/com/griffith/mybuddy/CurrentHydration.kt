@@ -491,8 +491,8 @@ var showDialog by mutableStateOf(false)
 fun HydrationCircle() {
     val deepSkyBlueColor = colorResource(id = R.color.deepSkyBlueColor)
     val borderColor = colorResource(id = R.color.borderColor)
-    val goalHydration = max(0, hydrationGoal.value.toInt())
-    val goalDecrease = hydrationGoal.value.toInt() - hydrationLevel
+    val goalHydration = max(0, AppVariables.hydrationGoal.value.toInt())
+    val goalDecrease = AppVariables.hydrationGoal.value.toInt() - hydrationLevel
     val percentage = if (goalHydration.toFloat() != 0f) {
         val tempPercentage = ((hydrationLevel.toFloat() / goalHydration.toFloat()) * 100).toInt()
         if (tempPercentage > 100) 100 else tempPercentage

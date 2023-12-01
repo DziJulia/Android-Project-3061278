@@ -239,7 +239,7 @@ fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<Str
 @Composable
 fun WaterIntakeGraph() {
     val graphData = hydrationLevel.toFloat()
-    val goalData = hydrationGoal.value.toFloat()
+    val goalData = AppVariables.hydrationGoal.value.toFloat()
 
     // Calculate the number of increments (each increment is 1000ml)
     val increments = (goalData / 1000).toInt()

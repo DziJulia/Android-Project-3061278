@@ -70,29 +70,6 @@ class Profile : ComponentActivity() {
 }
 
 /**
- * `weight, height, hydrationGoal` is a mutable state that holds the current information of user.
- * It's an integer that increases based on the amount of water intake.
- * This state is observed by Jetpack Compose and any changes to this state
- * will recompose all composable that read this state.
- */
-var weight =  mutableStateOf("0")
-var height =  mutableStateOf("0")
-var hydrationGoal = mutableStateOf("3000")
-/**
- * `activityLevel, gender` is a mutable state that holds the current information of user.
- * It's an string. This state is observed by Jetpack Compose and any changes to this state
- * will recompose all composable that read this state.
- */
-var activityLevel =  mutableStateOf("")
-var gender = mutableStateOf("")
-/**
- * `hydrationGoalManuallySet` is a mutable state that holds boolean that check for user input.
- */
-var hydrationGoalManuallySet = mutableStateOf(false)
-
-
-
-/**
  * Creates a form with fields for name, gender, weight, height, activity level, and water intake goal.
  */
 @Composable
@@ -151,16 +128,16 @@ fun CreateFormFields() {
     FormField(label = "Name", value = name)
     AddDivider()
 
-    FormField(label = "Gender", value = gender)
+    FormField(label = "Gender", value = AppVariables.gender)
     AddDivider()
 
-    FormField(label = "Weight", value = weight )
+    FormField(label = "Weight", value = AppVariables.weight )
     AddDivider()
 
-    FormField(label = "Height", value = height)
+    FormField(label = "Height", value = AppVariables.height)
     AddDivider()
 
-    FormField(label = "Activity Level", value = activityLevel)
+    FormField(label = "Activity Level", value = AppVariables.activityLevel)
 }
 
 
@@ -170,21 +147,21 @@ fun CreateFormFields() {
  */
 @Composable
 fun HandleHydrationGoal(modifier: Modifier) {
-    val activityLevelTransformed = transformActivityLevel(activityLevel.value)
-    if (!hydrationGoalManuallySet.value) {
-        hydrationGoal.value = calculateRecommendedWaterIntake(
+    val activityLevelTransformed = transformActivityLevel(AppVariables.activityLevel.value)
+    if (!AppVariables.hydrationGoalManuallySet.value) {
+        AppVariables.hydrationGoal.value = calculateRecommendedWaterIntake(
             try {
-                weight.value.toInt()
+                AppVariables.weight.value.toInt()
             } catch (e: NumberFormatException) {
                 0
             },
             try {
-                height.value.toInt()
+                AppVariables.height.value.toInt()
             } catch (e: NumberFormatException) {
                 0
             },
             activityLevelTransformed,
-            gender.value
+            AppVariables.gender.value
         )
     }
 
@@ -192,9 +169,9 @@ fun HandleHydrationGoal(modifier: Modifier) {
         HandleHydrationGoalFormField()
     }
 
-    if (hydrationGoalManuallySet.value) {
+    if (AppVariables.hydrationGoalManuallySet.value) {
         Button(
-            onClick = { hydrationGoalManuallySet.value = false },
+            onClick = { AppVariables.hydrationGoalManuallySet.value = false },
             colors = ButtonDefaults.buttonColors(Color.Transparent),
             contentPadding = PaddingValues(0.dp)
         ) {
@@ -210,16 +187,16 @@ fun HandleHydrationGoal(modifier: Modifier) {
 fun HandleHydrationGoalFormField() {
     FormField(
         label = "Water Intake Goal",
-        value = hydrationGoal,
+        value = AppVariables.hydrationGoal,
         onValueChange = {
             //need to catch if input value is not nil
             try {
                 if (it.toInt() != 0) {
-                    hydrationGoal.value = it
-                    hydrationGoalManuallySet.value = true
+                    AppVariables.hydrationGoal.value = it
+                    AppVariables.hydrationGoalManuallySet.value = true
                 }
             } catch (e: Exception) {
-                hydrationGoal.value = "0"
+                AppVariables.hydrationGoal.value = "0"
             }
         }
     )
@@ -349,7 +326,7 @@ fun ShowNumberInputDialog(label: String, value: MutableState<String>, openDialog
                         value.value = newValue
                         onValueChange(newValue)
                         if (label == "Water Intake Goal") {
-                            hydrationGoalManuallySet.value = true
+                            AppVariables.hydrationGoalManuallySet.value = true
                         }
                     }
                 },
