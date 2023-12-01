@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -48,15 +49,11 @@ import kotlin.math.roundToInt
  * https://github.com/DziJulia/Android-Project-3061278
  */
 
-const val HIGHLY_ACTIVE = 500f
-const val MODERATELY_ACTIVE = 250f
-const val LIGHTLY_ACTIVE = 100f
-const val NO_ACTIVE = 0f
 class Profile : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Box(modifier = Modifier.fillMaxSize().then(activityBackground)) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 MyButtonsRow()
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
                 Column(modifier = Modifier.padding(16.dp, end = if (isLandscape()) 70.dp else 0.dp)) {
@@ -235,10 +232,10 @@ fun HandleHydrationGoalFormField() {
  */
 fun transformActivityLevel(activityLevel: String): Float {
     return when (activityLevel) {
-        "Highly Active" -> HIGHLY_ACTIVE
-        "Moderately Active" -> MODERATELY_ACTIVE
-        "Lightly Active" -> LIGHTLY_ACTIVE
-        else -> NO_ACTIVE
+        "Highly Active" -> Constants.HIGHLY_ACTIVE
+        "Moderately Active" -> Constants.MODERATELY_ACTIVE
+        "Lightly Active" -> Constants.LIGHTLY_ACTIVE
+        else -> Constants.NO_ACTIVE
     }
 }
 
@@ -365,7 +362,7 @@ fun ShowNumberInputDialog(label: String, value: MutableState<String>, openDialog
                 onClick = {
                     openDialog.value = false
                 },
-                colors = ButtonDefaults.buttonColors(deepSkyBlueColor)
+                colors = ButtonDefaults.buttonColors(colorResource(id = R.color.deepSkyBlueColor))
             ) {
                 Text(text = "Confirm", color = Color.Black)
             }
@@ -400,7 +397,7 @@ fun ShowTextInputDialog(label: String, value: MutableState<String>, openDialog: 
                 onClick = {
                     openDialog.value = false
                 },
-                colors = ButtonDefaults.buttonColors(deepSkyBlueColor)
+                colors = ButtonDefaults.buttonColors(colorResource(id = R.color.deepSkyBlueColor))
             ) {
                 Text(text = "Confirm", color = Color.Black)
             }
@@ -445,7 +442,10 @@ fun SelectionPopup(label: String, value: MutableState<String>, options: List<Str
             Button(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.End).padding(16.dp),
-                colors = ButtonDefaults.buttonColors(deepSkyBlueColor)
+                colors = ButtonDefaults.buttonColors(
+                    colorResource(id = R.color.deepSkyBlueColor),
+                    contentColor = Color.Black
+                )
             ) {
                 Text("Confirm")
             }

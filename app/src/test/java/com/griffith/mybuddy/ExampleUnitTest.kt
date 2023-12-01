@@ -78,11 +78,11 @@ class ExampleUnitTest {
         val result6 = password6.isValidatePassword()
 
         assertEquals("", result1)
-        assertEquals(ERR_LEN, result2)
-        assertEquals(ERR_SPECIAL, result3)
-        assertEquals(ERR_UPPER, result4)
-        assertEquals(ERR_DIGIT, result5)
-        assertEquals(ERR_WHITESPACE, result6)
+        assertEquals(Constants.ERR_LEN, result2)
+        assertEquals(Constants.ERR_SPECIAL, result3)
+        assertEquals(Constants.ERR_UPPER, result4)
+        assertEquals(Constants.ERR_DIGIT, result5)
+        assertEquals(Constants.ERR_WHITESPACE, result6)
     }
 
     /**

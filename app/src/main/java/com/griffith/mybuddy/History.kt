@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,9 +51,7 @@ class History : ComponentActivity() {
             val selectedDate = remember { mutableStateOf(Date()) }
             val selectedButton = remember { mutableStateOf("D") }
 
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .then(activityBackground)) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 MyButtonsRow()
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
 
@@ -120,7 +119,7 @@ fun TimeSelectionButton(text: String, width: Dp, selected: Boolean = false, sele
                 selectedDate.value = newSelectedDate
                 println("Selected date: $newSelectedDate")
             })
-            .background(color = if (selected) deepSkyBlueColor else Color.White)
+            .background(color = if (selected) colorResource(id = R.color.deepSkyBlueColor) else Color.White)
             .padding(top = 2.dp, bottom = 2.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -258,7 +257,7 @@ fun WaterIntakeGraph() {
                 modifier = Modifier
                     .height((currentIncrement / goalData) * 200.dp)
                     .fillMaxWidth()
-                    .background(if (currentIncrement > 0) deepSkyBlueColor else Color.Transparent),
+                    .background(if (currentIncrement > 0) colorResource(id = R.color.deepSkyBlueColor) else Color.Transparent),
                 contentAlignment = Alignment.TopCenter
             ) {
                 if (currentIncrement > 0) {
@@ -276,7 +275,9 @@ fun WaterIntakeGraph() {
                 modifier = Modifier
                     .height((currentIncrement / goalData) * 200.dp)
                     .fillMaxWidth()
-                    .background(if (remainingGoal > 0 && currentIncrement > 0) deepSkyBlueColor else Color.Transparent),
+                    .background(
+                        if (remainingGoal > 0 && currentIncrement > 0) colorResource(id = R.color.deepSkyBlueColor) else Color.Transparent
+                    ),
                 contentAlignment = Alignment.TopCenter
             ) {
                 if (remainingGoal > 0 && currentIncrement > 0) {

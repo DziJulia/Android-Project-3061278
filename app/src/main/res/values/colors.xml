@@ -7,4 +7,9 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="deepSkyBlueColor">#00BFFF</color>
+    <color name="activityBackground">#E8F4F8</color>
+    <color name="buttonBackgroundColor">#C0DBEC</color>
+    <color name="borderColor">#FF000000</color>
+    <color name="textColor">#FF000000</color>
 </resources>

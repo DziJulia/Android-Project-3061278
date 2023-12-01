@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -56,14 +57,6 @@ import java.util.regex.Pattern
  * 3061278
  * https://github.com/DziJulia/Android-Project-3061278
  */
-const val ERR_LEN = "Password must have at least eight characters!"
-const val ERR_WHITESPACE = "Password must not contain whitespace!"
-const val ERR_DIGIT = "Password must contain at least one digit!"
-const val ERR_UPPER = "Password must have at least one uppercase letter!"
-const val ERR_SPECIAL = "Password must have at least one special character, s uch as: _%-=+#@"
-const val ERR_NOT_MATCH = "Password doesn't match!"
-const val ERR_NOT_EMPTY = "Email cannot be empty!"
-const val ERR_NOT_VALID = "Email is not valid!"
 
 class Login : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,10 +78,6 @@ class Login : ComponentActivity() {
     }
 }
 
-val deepSkyBlueColor = Color(0xFF00BFFF)
-val activityBackground = Modifier.background(color = Color(232, 244, 248))
-val buttonBackgroundColor = Color(192, 219, 236)
-
 /**
  * This function sets up the UI for the login screen. It adjusts the layout
  * based on the orientation of the device.
@@ -100,7 +89,9 @@ fun SetupUI(navController: NavController) {
     val password = remember { mutableStateOf("") }
 
     if (!isLandscape()) {
-        Box(modifier = Modifier.fillMaxSize().offset(y = 50.dp)) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .offset(y = 50.dp)) {
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "App Logo",
@@ -119,7 +110,7 @@ fun SetupUI(navController: NavController) {
                 Text(
                     text = "Welcome!",
                     fontSize = 40.sp,
-                    color = deepSkyBlueColor,
+                    color = colorResource(id = R.color.deepSkyBlueColor),
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 Button(
@@ -151,7 +142,7 @@ fun SetupUI(navController: NavController) {
                         context.startActivity(intent)
                     },
                     colors = ButtonDefaults.buttonColors(
-                        deepSkyBlueColor,
+                        colorResource(id = R.color.deepSkyBlueColor),
                         contentColor = Color.Black
                     ),
                     modifier = Modifier
@@ -229,7 +220,6 @@ fun MyAppNavigation() {
     }
 }
 
-
 /**
  * A composable function that represents the Registration Screen in the application.
  * @param navController The NavController that this screen uses for navigation.
@@ -271,10 +261,10 @@ fun RegistrationScreen(navController: NavController) {
                 // Validation of input
                 // TODO need to add validation if email exist in the database
                 if (emailAddress.value.isEmpty()){
-                    Toast.makeText(context, ERR_NOT_EMPTY, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, Constants.ERR_NOT_EMPTY, Toast.LENGTH_SHORT).show()
                 }
                 else if (!emailAddress.value.isValidEmail()){
-                    Toast.makeText(context, ERR_NOT_VALID, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, Constants.ERR_NOT_VALID, Toast.LENGTH_SHORT).show()
                 }
                 else if (password1.value.isValidatePassword().isNotEmpty()){
                     Toast.makeText(context, password1.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
@@ -283,16 +273,18 @@ fun RegistrationScreen(navController: NavController) {
                     Toast.makeText(context, password2.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
                 }
                 else if (password1.value != password2.value) {
-                    Toast.makeText(context, ERR_NOT_MATCH, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, Constants.ERR_NOT_MATCH, Toast.LENGTH_SHORT).show()
                 } else {
                     // TODO Handle registration
                 }
             },
            colors = ButtonDefaults.buttonColors(
-               deepSkyBlueColor,
+               colorResource(id = R.color.deepSkyBlueColor),
                contentColor = Color.Black
             ),
-            modifier = Modifier.height(50.dp).width(200.dp)
+            modifier = Modifier
+                .height(50.dp)
+                .width(200.dp)
         ) {
             Text("Register")
         }
@@ -318,7 +310,7 @@ fun NameField(email: MutableState<String>) {
         label = { Text("Email") },
         colors = TextFieldDefaults.textFieldColors(
             textColor = Color.Black,
-            containerColor = buttonBackgroundColor
+            containerColor = colorResource(id = R.color.buttonBackgroundColor)
         ),
         // Hide keyboard when enter key is pressed
         keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
@@ -340,11 +332,11 @@ fun NameField(email: MutableState<String>) {
  */
 fun String.isValidatePassword(): String {
     return when {
-        length < 8 -> ERR_LEN
-        any { it.isWhitespace() } -> ERR_WHITESPACE
-        none { it.isDigit() } -> ERR_DIGIT
-        none { it.isUpperCase() } -> ERR_UPPER
-        none { !it.isLetterOrDigit() } -> ERR_SPECIAL
+        length < 8 -> Constants.ERR_LEN
+        any { it.isWhitespace() } -> Constants.ERR_WHITESPACE
+        none { it.isDigit() } -> Constants.ERR_DIGIT
+        none { it.isUpperCase() } -> Constants.ERR_UPPER
+        none { !it.isLetterOrDigit() } -> Constants.ERR_SPECIAL
         else -> ""
     }
 }
@@ -397,7 +389,7 @@ fun PasswordField(password: MutableState<String>) {
         label = { Text("Password") },
         colors = TextFieldDefaults.textFieldColors(
             textColor = Color.Black,
-            containerColor =  buttonBackgroundColor
+            containerColor =  colorResource(id = R.color.buttonBackgroundColor)
         ),
         visualTransformation = if (passwordVisibility.value) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
@@ -510,7 +502,7 @@ fun IconImage(resourceId: Int, contentDescription: String, color: Color) {
  */
 @Composable
 fun ButtonRowItem(text: String, destination: Class<*>, context: android.content.Context, isSelected: Boolean, onSelected: () -> Unit) {
-    val iconColor = if (isSelected) deepSkyBlueColor else Color.Black
+    val iconColor = if (isSelected) colorResource(id = R.color.deepSkyBlueColor)else Color.Black
     val iconResource = when (text) {
         "C" -> R.drawable.drop
         "P" -> R.drawable.profile
@@ -555,9 +547,15 @@ fun MyButtonsRow() {
         horizontalAlignment = if (isLandscape()) Alignment.End else Alignment.CenterHorizontally
     ) {
         if (!isLandscape()) {
-            Divider(color = deepSkyBlueColor, thickness = 3.dp)
+            Divider(
+                color = colorResource(id = R.color.deepSkyBlueColor),
+                thickness = 3.dp
+            )
+
             Row(
-                modifier = Modifier.fillMaxWidth().background(Color.White),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 AddSpacer(30.dp)
@@ -570,7 +568,9 @@ fun MyButtonsRow() {
             }
         } else {
             Column(
-                modifier = Modifier.fillMaxHeight().background(Color.White),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .background(Color.White),
                 verticalArrangement = Arrangement.SpaceEvenly,
             ) {
                 AddSpacer(30.dp)

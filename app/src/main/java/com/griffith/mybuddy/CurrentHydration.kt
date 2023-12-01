@@ -11,7 +11,6 @@ import android.content.res.Configuration
 import androidx.compose.ui.graphics.SweepGradient
 import android.health.connect.datatypes.ExerciseRoute
 import android.location.Location
-import android.location.Location.distanceBetween
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
@@ -68,6 +67,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -114,7 +114,7 @@ class CurrentHydration : ComponentActivity() {
                 }
             }
 
-            Box(modifier = Modifier.fillMaxSize().then(activityBackground)) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = if (isLandscape()) Alignment.Start else Alignment.CenterHorizontally
@@ -232,7 +232,6 @@ fun getTimeUntilMidnight(): Long {
  */
 @Composable
 fun WeatherRequest() {
-    val API_KEY = "5e99e2e828c2a3d4b57fab4f8772528f"
     val context = LocalContext.current
     var weatherData by remember { mutableStateOf<JSONObject?>(null) }
     var lastNotificationTime by remember { mutableStateOf<Long?>(0) }
@@ -246,7 +245,7 @@ fun WeatherRequest() {
         LocationUpdates { location ->
             //Test check if im getting correct location
             /**
-             * val geocodingUrl = "https://api.opencagedata.com/geocode/v1/json?q=${location.latitude}+${location.longitude}&key=64d3b25aa4da48c7a43665b24067b2e7"
+             * val geocodingUrl = "https://api.opencagedata.com/geocode/v1/json?q=${location.latitude}+${location.longitude}&key=${Constants.API_KEY_LOCATION}"
              * CoroutineScope(Dispatchers.IO).launch {
              *  val locationData = fetchWeatherData(geocodingUrl)
              *  val locationName = locationData.getJSONArray("results").getJSONObject(0).getJSONObject("components").getString("city")
@@ -255,7 +254,7 @@ fun WeatherRequest() {
              * }
             */
             val url =
-                "https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=$API_KEY"
+                "https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${Constants.API_KEY_WEATHER}"
             CoroutineScope(Dispatchers.IO).launch {
                 weatherData = fetchWeatherData(url)
             }
@@ -271,7 +270,7 @@ fun WeatherRequest() {
 
         weatherData?.let {
             val temperature = it.getJSONObject("main").getDouble("temp") - 273.15
-            if (temperature > 25) {
+            if (temperature > Constants.MAX_TEMPERATURE) {
                 sendNotification(context)
                 lastNotificationTime = System.currentTimeMillis()
             }
@@ -365,8 +364,8 @@ fun WaterButton(text: String, onClick: () -> Unit) {
 
     Button(
         onClick = onClick,
-        colors = ButtonDefaults.buttonColors(buttonBackgroundColor),
-        border = BorderStroke(1.dp, deepSkyBlueColor),
+        colors = ButtonDefaults.buttonColors(colorResource(id = R.color.buttonBackgroundColor)),
+        border = BorderStroke(1.dp, colorResource(id = R.color.deepSkyBlueColor)),
         shape = RectangleShape,
         modifier = Modifier
             .padding(top = 10.dp)
@@ -411,7 +410,7 @@ fun CustomAmountDialog(context: Context) {
                             ).show()
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(deepSkyBlueColor)
+                    colors = ButtonDefaults.buttonColors(colorResource(id = R.color.deepSkyBlueColor))
                 ) {
                     Text(text = "Confirm", color = Color.Black)
                 }
@@ -419,7 +418,7 @@ fun CustomAmountDialog(context: Context) {
             dismissButton = {
                 Button(
                     onClick = { showDialog = false },
-                    colors = ButtonDefaults.buttonColors(deepSkyBlueColor)
+                    colors = ButtonDefaults.buttonColors(colorResource(id = R.color.deepSkyBlueColor))
                 ) {
                     Text(text = "Cancel", color = Color.Black)
                 }
@@ -485,23 +484,21 @@ var hydrationLevel by mutableStateOf(0)
  */
 var showDialog by mutableStateOf(false)
 
-
 /**
  * Function that displays a hydration circle with colored circles and text.
  */
 @Composable
 fun HydrationCircle() {
+    val deepSkyBlueColor = colorResource(id = R.color.deepSkyBlueColor)
+    val borderColor = colorResource(id = R.color.borderColor)
     val goalHydration = max(0, hydrationGoal.value.toInt())
     val goalDecrease = hydrationGoal.value.toInt() - hydrationLevel
     val percentage = if (goalHydration.toFloat() != 0f) {
-        val tempPercentage = String.format("%.2f", (hydrationLevel.toFloat() / goalHydration.toFloat()) * 100).toFloat()
-        if (tempPercentage > 100f) 100f else tempPercentage
+        val tempPercentage = ((hydrationLevel.toFloat() / goalHydration.toFloat()) * 100).toInt()
+        if (tempPercentage > 100) 100 else tempPercentage
     } else {
-        0f
+        0
     }
-
-    val borderColor = Color.Black
-    val progressColor = deepSkyBlueColor
 
     val (blueSize, whiteSize) = circleSize()
     Box(modifier = Modifier.size(blueSize), contentAlignment = Alignment.Center) {
@@ -528,7 +525,7 @@ fun HydrationCircle() {
             // The 'useCenter' parameter is set to true, which means the arc will
             // be a sector (a part of the circle enclosed by two radii and an arc).
             drawArc(
-                color = progressColor,
+                color = deepSkyBlueColor,
                 startAngle = -270f,
                 sweepAngle = 360f * (percentage / 100f),
                 topLeft = topLeftOffset,
@@ -536,7 +533,7 @@ fun HydrationCircle() {
                 useCenter = true
             )
             // This draws a full circle on the border of the Canvas.
-            // The color of the circle is determined by the variable 'borderColor'.
+            // The color of the circle is determined by the variable 'Color(R.color.borderColor)'.
             // The 'style' parameter is set to Stroke, which means only the outline
             // of the circle will be drawn.
             // The width of the circle's outline is determined by '2.dp.toPx()'.
