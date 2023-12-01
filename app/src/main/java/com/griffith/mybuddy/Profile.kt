@@ -282,7 +282,6 @@ fun calculateRecommendedWaterIntake(weight: Int, height: Int, activityLevel: Flo
     return result.roundToInt().toString()
 }
 
-
 /**
  * This is a composable function that shows a selection popup with a list of options.
  * @param label The label of the form field.

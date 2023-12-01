@@ -107,10 +107,10 @@ class CurrentHydration : ComponentActivity() {
             WeatherRequest()
 
             //Reset hydration leve back to 0 every midnight
-            LaunchedEffect(key1 = hydrationLevel) {
+            LaunchedEffect(key1 = AppVariables.hydrationLevel) {
                 while (true) {
                     delay(getTimeUntilMidnight())
-                    hydrationLevel = 0
+                    AppVariables.hydrationLevel = 0
                 }
             }
 
@@ -384,9 +384,9 @@ fun WaterButton(text: String, onClick: () -> Unit) {
 fun CustomAmountDialog(context: Context) {
     var customAmount by remember { mutableStateOf("") }
 
-    if (showDialog) {
+    if (AppVariables.showDialog) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { AppVariables.showDialog = false },
             title = { Text(text = "Add Custom Amount") },
             text = {
                 TextField(
@@ -399,8 +399,8 @@ fun CustomAmountDialog(context: Context) {
                 Button(
                     onClick = {
                         if (customAmount.toIntOrNull() != null) {
-                            hydrationLevel += customAmount.toInt()
-                            showDialog = false
+                            AppVariables.hydrationLevel += customAmount.toInt()
+                            AppVariables.showDialog = false
                         } else {
                             //Handle of non numeric input
                             Toast.makeText(
@@ -417,7 +417,7 @@ fun CustomAmountDialog(context: Context) {
             },
             dismissButton = {
                 Button(
-                    onClick = { showDialog = false },
+                    onClick = { AppVariables.showDialog = false },
                     colors = ButtonDefaults.buttonColors(colorResource(id = R.color.deepSkyBlueColor))
                 ) {
                     Text(text = "Cancel", color = Color.Black)
@@ -443,10 +443,10 @@ fun WaterButtons() {
         if (isLandscape()) {
             buttonLabels.forEachIndexed { index, label ->
                 when (index) {
-                    0 -> WaterButton(label) { hydrationLevel += 250 }
-                    1 -> WaterButton(label) { hydrationLevel += 300 }
-                    2 -> WaterButton(label) { hydrationLevel += 500 }
-                    3 -> WaterButton(label) { showDialog = true }
+                    0 -> WaterButton(label) { AppVariables.hydrationLevel += 250 }
+                    1 -> WaterButton(label) { AppVariables.hydrationLevel += 300 }
+                    2 -> WaterButton(label) { AppVariables.hydrationLevel += 500 }
+                    3 -> WaterButton(label) { AppVariables.showDialog = true }
                 }
                 AddSpacer(5.dp)
             }
@@ -456,33 +456,17 @@ fun WaterButtons() {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 Column {
-                    WaterButton(buttonLabels[0]) { hydrationLevel += 250 }
-                    WaterButton(buttonLabels[1]) { hydrationLevel += 300 }
+                    WaterButton(buttonLabels[0]) { AppVariables.hydrationLevel += 250 }
+                    WaterButton(buttonLabels[1]) { AppVariables.hydrationLevel += 300 }
                 }
                 Column {
-                    WaterButton(buttonLabels[2]) { hydrationLevel += 500 }
-                    WaterButton(buttonLabels[3]) { showDialog = true }
+                    WaterButton(buttonLabels[2]) { AppVariables.hydrationLevel += 500 }
+                    WaterButton(buttonLabels[3]) { AppVariables.showDialog = true }
                 }
             }
         }
     }
 }
-
-/**
- * `hydrationLevel` is a mutable state that holds the current hydration level.
- * It's an integer that increases based on the amount of water intake.
- * This state is observed by Jetpack Compose and any changes to this state
- * will recompose all composables that read this state.
- */
-var hydrationLevel by mutableStateOf(0)
-
-/**
- * `showDialog` is a mutable state that controls the visibility of the dialog.
- * When `showDialog` is true, the dialog is visible. When `showDialog` is false,
- * the dialog is dismissed. This state is observed by Jetpack Compose and any changes
- * to this state will recompose all composables that read this state.
- */
-var showDialog by mutableStateOf(false)
 
 /**
  * Function that displays a hydration circle with colored circles and text.
@@ -492,9 +476,9 @@ fun HydrationCircle() {
     val deepSkyBlueColor = colorResource(id = R.color.deepSkyBlueColor)
     val borderColor = colorResource(id = R.color.borderColor)
     val goalHydration = max(0, AppVariables.hydrationGoal.value.toInt())
-    val goalDecrease = AppVariables.hydrationGoal.value.toInt() - hydrationLevel
+    val goalDecrease = AppVariables.hydrationGoal.value.toInt() - AppVariables.hydrationLevel
     val percentage = if (goalHydration.toFloat() != 0f) {
-        val tempPercentage = ((hydrationLevel.toFloat() / goalHydration.toFloat()) * 100).toInt()
+        val tempPercentage = ((AppVariables.hydrationLevel.toFloat() / goalHydration.toFloat()) * 100).toInt()
         if (tempPercentage > 100) 100 else tempPercentage
     } else {
         0
@@ -550,7 +534,7 @@ fun HydrationCircle() {
             // Text inside the smaller circle
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "$percentage %", style = TextStyle(fontSize = 20.sp))
-                Text(text = "$hydrationLevel ml", style = TextStyle(fontSize = 16.sp))
+                Text(text = "${AppVariables.hydrationLevel} ml", style = TextStyle(fontSize = 16.sp))
                 val displayText = if (goalDecrease > 0) "Goal: -$goalDecrease ml" else "Goal: 0 ml"
                 Text(text = displayText, style = TextStyle(fontSize = 16.sp))
             }

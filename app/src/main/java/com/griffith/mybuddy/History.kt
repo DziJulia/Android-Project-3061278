@@ -226,7 +226,7 @@ fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<Str
                 thickness = 1.dp
             )
             Text("Total ", textAlign = TextAlign.Start)
-            Text("$hydrationLevel ml", textAlign = TextAlign.Start)
+            Text("${AppVariables.hydrationLevel} ml", textAlign = TextAlign.Start)
             WaterIntakeGraph()
         }
     }
@@ -238,7 +238,7 @@ fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<Str
  */
 @Composable
 fun WaterIntakeGraph() {
-    val graphData = hydrationLevel.toFloat()
+    val graphData = AppVariables.hydrationLevel.toFloat()
     val goalData = AppVariables.hydrationGoal.value.toFloat()
 
     // Calculate the number of increments (each increment is 1000ml)

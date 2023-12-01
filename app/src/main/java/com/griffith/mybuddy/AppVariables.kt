@@ -30,4 +30,20 @@ object AppVariables {
      *  selected button. It is initially set to "C".
      */
     var selectedButtonMenu by mutableStateOf("C")
+
+    /**
+     * `hydrationLevel` is a mutable state that holds the current hydration level.
+     * It's an integer that increases based on the amount of water intake.
+     * This state is observed by Jetpack Compose and any changes to this state
+     * will recompose all composables that read this state.
+     */
+    var hydrationLevel by mutableStateOf(0)
+
+    /**
+     * `showDialog` is a mutable state that controls the visibility of the dialog.
+     * When `showDialog` is true, the dialog is visible. When `showDialog` is false,
+     * the dialog is dismissed. This state is observed by Jetpack Compose and any changes
+     * to this state will recompose all composables that read this state.
+     */
+    var showDialog by mutableStateOf(false)
 }

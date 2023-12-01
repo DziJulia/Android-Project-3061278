@@ -1,13 +1,17 @@
 package com.griffith.mybuddy
 
 object Constants {
+    //API KEYES
     const val API_KEY_WEATHER = "5e99e2e828c2a3d4b57fab4f8772528f"
     // const val API_KEY_LOCATION = "64d3b25aa4da48c7a43665b24067b2e7"
+
+    //PROFILE CONSTANTS
     const val MAX_TEMPERATURE = 25
     const val HIGHLY_ACTIVE = 500f
     const val MODERATELY_ACTIVE = 250f
     const val LIGHTLY_ACTIVE = 100f
     const val NO_ACTIVE = 0f
+
     //ERROR CONSTANTS
     const val ERR_LEN = "Password must have at least eight characters!"
     const val ERR_WHITESPACE = "Password must not contain whitespace!"

@@ -431,7 +431,6 @@ fun EyeClosedIcon() {
     )
 }
 
-
 /**
  * This is a composable function that creates a LogOut button. When the button is clicked,
  * an AlertDialog is shown to the user. After a delay, the user is redirected to the Login screen.
