@@ -1,6 +1,8 @@
 package com.griffith.mybuddy
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
@@ -37,7 +39,7 @@ object AppVariables {
      * This state is observed by Jetpack Compose and any changes to this state
      * will recompose all composables that read this state.
      */
-    var hydrationLevel by mutableStateOf(0)
+    var hydrationLevel by mutableIntStateOf(0)
 
     /**
      * `showDialog` is a mutable state that controls the visibility of the dialog.
@@ -46,4 +48,6 @@ object AppVariables {
      * to this state will recompose all composables that read this state.
      */
     var showDialog by mutableStateOf(false)
+
+    var altitude by mutableDoubleStateOf(0.0)
 }

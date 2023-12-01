@@ -147,6 +147,10 @@ fun CreateFormFields() {
  */
 @Composable
 fun HandleHydrationGoal(modifier: Modifier) {
+    LocationUpdates { location ->
+        AppVariables.altitude = location.altitude
+    }
+
     val activityLevelTransformed = transformActivityLevel(AppVariables.activityLevel.value)
     if (!AppVariables.hydrationGoalManuallySet.value) {
         AppVariables.hydrationGoal.value = calculateRecommendedWaterIntake(
@@ -161,7 +165,8 @@ fun HandleHydrationGoal(modifier: Modifier) {
                 0
             },
             activityLevelTransformed,
-            AppVariables.gender.value
+            AppVariables.gender.value,
+            AppVariables.altitude
         )
     }
 
@@ -273,13 +278,16 @@ fun FormField(label: String, value: MutableState<String>, onValueChange: (String
  * @param height The height of the person in centimeters.
  * @param activityLevel The activity level of the person. Higher values indicate higher activity levels.
  * @param gender The gender of the person. Can be "male" or "female".
+ * @param altitude The altitude from current location.
  * @return The recommended water intake in milliliters.
  */
-fun calculateRecommendedWaterIntake(weight: Int, height: Int, activityLevel: Float, gender: String): String {
+fun calculateRecommendedWaterIntake(weight: Int, height: Int, activityLevel: Float, gender: String, altitude: Double): String {
     val genderFactor = if (gender.lowercase() == "female") 0.8f else 0.85f
+    val adjustmentFactor = 1.0 + (altitude / 10000.0)
+    val result = (weight.toFloat() / 30 + height.toFloat() / 100) * 1000 * genderFactor + activityLevel
 
-    val result = ((weight.toFloat() / 30 + height.toFloat() / 100) * 1000 * genderFactor) + activityLevel
-    return result.roundToInt().toString()
+    // Return the rounded result directly
+    return (result * adjustmentFactor).roundToInt().toString()
 }
 
 /**
