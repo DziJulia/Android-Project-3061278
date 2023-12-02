@@ -1,6 +1,8 @@
 package com.griffith.mybuddy
 
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -49,6 +51,9 @@ import kotlin.math.roundToInt
  * https://github.com/DziJulia/Android-Project-3061278
  */
 
+private lateinit var databaseManager: DatabaseManager
+private lateinit var database: SQLiteDatabase
+
 class Profile : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +71,40 @@ class Profile : ComponentActivity() {
                 }
             }
         }
+    }
+    override fun onResume() {
+        super.onResume()
+        // Get the instance of databaseManager
+        databaseManager = DatabaseManagerSingleton.getInstance(this)
+        // Re-open the database connection in onResume
+        database = databaseManager.writableDatabase
+
+        Log.d("RETRIEVED", "AppVariables.emailAddress.value: ${AppVariables.emailAddress.value}")
+        // Load the user profile from the database
+        val userProfile = databaseManager.getUserProfile(AppVariables.emailAddress.value)
+        Log.d("RETRIEVED", "userProfile: $userProfile")
+        if (userProfile != null) {
+            // Update your fields here
+            AppVariables.name.value = userProfile.name ?: ""
+            AppVariables.gender.value = userProfile.gender ?: ""
+            AppVariables.activityLevel.value = userProfile.activityLevel ?: ""
+            AppVariables.height.value = userProfile.height.toString()
+            AppVariables.weight.value = userProfile.weight.toString()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        // Update the user profile in the database
+        databaseManager.upsertUserProfile(
+            AppVariables.emailAddress.value,
+            AppVariables.name.value,
+            AppVariables.gender.value,
+            AppVariables.activityLevel.value,
+            AppVariables.height.value.toFloat(),
+            AppVariables.weight.value.toFloat()
+        )
     }
 }
 
@@ -124,8 +163,7 @@ fun AddDivider() {
  */
 @Composable
 fun CreateFormFields() {
-    val name = remember { mutableStateOf("") }
-    FormField(label = "Name", value = name)
+    FormField(label = "Name", value = AppVariables.name)
     AddDivider()
 
     FormField(label = "Gender", value = AppVariables.gender)
@@ -154,18 +192,7 @@ fun HandleHydrationGoal(modifier: Modifier) {
     val activityLevelTransformed = transformActivityLevel(AppVariables.activityLevel.value)
     if (!AppVariables.hydrationGoalManuallySet.value) {
         AppVariables.hydrationGoal.value = calculateRecommendedWaterIntake(
-            try {
-                AppVariables.weight.value.toInt()
-            } catch (e: NumberFormatException) {
-                0
-            },
-            try {
-                AppVariables.height.value.toInt()
-            } catch (e: NumberFormatException) {
-                0
-            },
             activityLevelTransformed,
-            AppVariables.gender.value,
             AppVariables.altitude
         )
     }
@@ -274,17 +301,14 @@ fun FormField(label: String, value: MutableState<String>, onValueChange: (String
 
 /**
  * Calculates the recommended water intake for a person based on their weight, height, activity level, and gender.
- * @param weight The weight of the person in kilograms.
- * @param height The height of the person in centimeters.
  * @param activityLevel The activity level of the person. Higher values indicate higher activity levels.
- * @param gender The gender of the person. Can be "male" or "female".
  * @param altitude The altitude from current location.
  * @return The recommended water intake in milliliters.
  */
-fun calculateRecommendedWaterIntake(weight: Int, height: Int, activityLevel: Float, gender: String, altitude: Double): String {
-    val genderFactor = if (gender.lowercase() == "female") 0.8f else 0.85f
+fun calculateRecommendedWaterIntake(activityLevel: Float, altitude: Double): String {
+    val genderFactor = if (AppVariables.gender.value.lowercase() == "female") 0.8f else 0.85f
     val adjustmentFactor = 1.0 + (altitude / 10000.0)
-    val result = (weight.toFloat() / 30 + height.toFloat() / 100) * 1000 * genderFactor + activityLevel
+    val result = (AppVariables.weight.value.toFloat()/30 + AppVariables.height.value.toFloat() / 100) * 1000 * genderFactor + activityLevel
 
     // Return the rounded result directly
     return (result * adjustmentFactor).roundToInt().toString()

@@ -2,10 +2,13 @@ package com.griffith.mybuddy
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.database.sqlite.SQLiteDatabase
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,8 +28,10 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -55,8 +60,11 @@ import java.util.regex.Pattern
  * 3061278
  * https://github.com/DziJulia/Android-Project-3061278
  */
+private lateinit var databaseManager: DatabaseManager
+private lateinit var database: SQLiteDatabase
 
 class Login : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -68,11 +76,43 @@ class Login : ComponentActivity() {
      * Responds to changes in the device's configuration, such as when the orientation is changed.
      * @param newConfig The new configuration that the system has changed to.
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         setContent {
             MyAppNavigation()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        super.onResume()
+        // Get the instance of databaseManager
+        databaseManager = DatabaseManagerSingleton.getInstance(this)
+        // Re-open the database connection in onResume
+        database = databaseManager.writableDatabase
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onStop() {
+        super.onStop()
+
+        //Only update on registration
+        if(AppVariables.registration) {
+            // Update the user profile in the database
+            databaseManager.insertUser(
+                AppVariables.emailAddressRegistration.value,
+                AppVariables.password1.value
+            )
+
+            AppVariables.registration = false
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Close the database connection in onDestroy
+        database.close()
     }
 }
 
@@ -80,10 +120,10 @@ class Login : ComponentActivity() {
  * This function sets up the UI for the login screen. It adjusts the layout
  * based on the orientation of the device.
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SetupUI(navController: NavController) {
     val context = LocalContext.current
-    val emailAddress = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
 
     if (!isLandscape()) {
@@ -120,24 +160,22 @@ fun SetupUI(navController: NavController) {
                 ) {
                     Text("Sing in to continue")
                 }
-                // TODO need to add validation if email exist in the database
-                NameField(emailAddress)
-                // TODO need to add validation if password match with the database one for email
+                NameField(AppVariables.emailAddress)
                 PasswordField(password)
-                Button(
-                    onClick = { /* TODO Handle forgot password*/ },
-                    colors = ButtonDefaults.buttonColors(
-                        Color.Transparent,
-                        contentColor = Color.Black
-                    )
-                ) {
-                    Text("Forgot Password")
-                }
+                ForgotPasswordButton()
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
                 Button(
                     onClick = {
-                        val intent = Intent(context, CurrentHydration::class.java)
-                        context.startActivity(intent)
+                        if (databaseManager.verifyLogin(AppVariables.emailAddress.value, password.value)) {
+                            // Verification successful, proceed to CurrentHydration activity
+                            val intent = Intent(context, CurrentHydration::class.java)
+                            context.startActivity(intent)
+                        }else {
+                            // Verification failed, handle the error (e.g., show an error message)
+                            // You can also clear the password field or take other actions as needed
+                            // For simplicity, I'm using a Toast to show an error message.
+                            Toast.makeText(context, "Invalid email or password", Toast.LENGTH_SHORT).show()
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(
                         colorResource(id = R.color.deepSkyBlueColor),
@@ -181,22 +219,20 @@ fun SetupUI(navController: NavController) {
                     ) {
                         Text("Sing in to continue")
                     }
-                    // TODO need to add validation if email exist in the database
-                    NameField(emailAddress)
-                    // TODO need to add validation if password match with the database one for email
+                    NameField(AppVariables.emailAddress)
                     PasswordField(password)
-                    Button(
-                        onClick = { /* TODO Handle forgot password*/ },
-                        colors = ButtonDefaults.buttonColors(
-                            Color.Transparent,
-                            contentColor = Color.Black
-                        )
-                    ) {
-                        Text("Forgot Password")
-                    }
+                    ForgotPasswordButton()
                     Button(onClick = {
-                        val intent = Intent(context, CurrentHydration::class.java)
-                        context.startActivity(intent)
+                        if (databaseManager.verifyLogin(AppVariables.emailAddress.value, password.value)) {
+                            // Verification successful, proceed to CurrentHydration activity
+                            val intent = Intent(context, CurrentHydration::class.java)
+                            context.startActivity(intent)
+                        }else {
+                            // Verification failed, handle the error (e.g., show an error message)
+                            // You can also clear the password field or take other actions as needed
+                            // For simplicity, I'm using a Toast to show an error message.
+                            Toast.makeText(context, "Invalid email or password", Toast.LENGTH_SHORT).show()
+                        }
                     }) {
                         Text("Login")
                     }
@@ -209,6 +245,7 @@ fun SetupUI(navController: NavController) {
 /**
  * A composable function for managing navigation within the application.
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyAppNavigation() {
     val navController = rememberNavController()
@@ -225,9 +262,6 @@ fun MyAppNavigation() {
 @Composable
 fun RegistrationScreen(navController: NavController) {
     val context = LocalContext.current
-    val emailAddress = remember { mutableStateOf("") }
-    val password1 = remember { mutableStateOf("") }
-    val password2 = remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -250,30 +284,35 @@ fun RegistrationScreen(navController: NavController) {
         ) {
             Text("Back to Login")
         }
-        NameField(emailAddress)
-        PasswordField(password1)
-        PasswordField(password2)
+        NameField(AppVariables.emailAddressRegistration)
+        PasswordField(AppVariables.password1)
+        PasswordField(AppVariables.password2)
         Spacer(modifier = Modifier.padding(vertical = 10.dp))
         Button(
             onClick = {
                 // Validation of input
+                if (databaseManager.isEmailPresent(AppVariables.emailAddressRegistration.value)){
+                    Toast.makeText(context, Constants.ERR_EXIST, Toast.LENGTH_SHORT).show()
+                }
                 // TODO need to add validation if email exist in the database
-                if (emailAddress.value.isEmpty()){
+                else if (AppVariables.emailAddressRegistration.value.isEmpty()){
                     Toast.makeText(context, Constants.ERR_NOT_EMPTY, Toast.LENGTH_SHORT).show()
                 }
-                else if (!emailAddress.value.isValidEmail()){
+                else if (!AppVariables.emailAddressRegistration.value.isValidEmail()){
                     Toast.makeText(context, Constants.ERR_NOT_VALID, Toast.LENGTH_SHORT).show()
                 }
-                else if (password1.value.isValidatePassword().isNotEmpty()){
-                    Toast.makeText(context, password1.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
+                else if (AppVariables.password1.value.isValidatePassword().isNotEmpty()){
+                    Toast.makeText(context, AppVariables.password1.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
                 }
-                else if (password2.value.isValidatePassword().isNotEmpty()){
-                    Toast.makeText(context, password2.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
+                else if (AppVariables.password2.value.isValidatePassword().isNotEmpty()){
+                    Toast.makeText(context, AppVariables.password2.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
                 }
-                else if (password1.value != password2.value) {
+                else if (AppVariables.password1.value != AppVariables.password2.value) {
                     Toast.makeText(context, Constants.ERR_NOT_MATCH, Toast.LENGTH_SHORT).show()
                 } else {
-                    // TODO Handle registration
+                    AppVariables.registration = true
+                    val intent = Intent(context, CurrentHydration::class.java)
+                    context.startActivity(intent)
                 }
             },
            colors = ButtonDefaults.buttonColors(
@@ -574,4 +613,78 @@ fun MyButtonsRow() {
         }
     }
 }
+
+/**
+ * A composable function that displays a dialog for password recovery.
+ *
+ * The dialog includes a text field for the user to enter their email address and two buttons: "Send Email" and "Cancel".
+ * When the "Send Email" button is clicked, it calls the `onSendEmail` function with the entered
+ * email address as a parameter and then dismisses the dialog.
+ * When the "Cancel" button is clicked, it simply dismisses the dialog.
+ *
+ * @param onDismiss A function to be called when the dialog is dismissed.
+ * @param onSendEmail A function to be called when the "Send Email" button is clicked.
+ * It takes the entered email address as a parameter.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ForgotPasswordPopup(onDismiss: () -> Unit, onSendEmail: (String) -> Unit) {
+    var forgotEmailAddress by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Forgot Password") },
+        text = {
+            Column {
+                Text("Please enter your email address:")
+                TextField(
+                    value = forgotEmailAddress,
+                    onValueChange = { forgotEmailAddress = it },
+                    label = { Text("Email Address") }
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                onSendEmail(forgotEmailAddress)
+                onDismiss()
+            }) {
+                Text("Send Email")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+/**
+ * A composable function that displays a "Forgot Password" button.
+ * When the button is clicked, it sets `AppVariables.isForgotPasswordPopupVisible` to `true`,
+ * which triggers the `ForgotPasswordPopup` to be displayed.
+ */
+@Composable
+fun ForgotPasswordButton() {
+    Button(
+        onClick = { AppVariables.isForgotPasswordPopupVisible = true },
+        colors = ButtonDefaults.buttonColors(
+            Color.Transparent,
+            contentColor = Color.Black
+        )
+    ) {
+        Text("Forgot Password")
+    }
+    if (AppVariables.isForgotPasswordPopupVisible) {
+        ForgotPasswordPopup(
+            onDismiss = { AppVariables.isForgotPasswordPopupVisible = false },
+            onSendEmail = {
+                // TODO: Add logic to send email
+                //sendPasswordResetEmail(emailAddress.value)
+            }
+        )
+    }
+}
+
 

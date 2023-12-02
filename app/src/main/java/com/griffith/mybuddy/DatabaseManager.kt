@@ -5,10 +5,13 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import java.security.SecureRandom
 import java.util.Base64
 import java.security.MessageDigest
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * Manages the creation and upgrading of the SQLite database for the application.
@@ -35,6 +38,7 @@ class DatabaseManager(
      *
      * @param p0 The SQLiteDatabase instance being created.
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(p0: SQLiteDatabase?) {
         p0?.execSQL(createUsersTable)
         p0?.execSQL(createHydrationTable)
@@ -52,6 +56,7 @@ class DatabaseManager(
      * @param p1 The old database version.
      * @param p2 The new database version.
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) {
         p0?.execSQL(dropHydrationTable)
         p0?.execSQL(dropProfileTable)
@@ -70,8 +75,7 @@ class DatabaseManager(
      * The table includes fields for tracking hydration data for each day, linked to a user.
      *
      * Table Columns:
-     * - id: Unique identifier for each hydration record.
-     * - date: Date of the hydration record.
+     * - date: Date of the hydration record Primary key.
      * - value_of_day: Numeric value representing the hydration level for the day.
      * - goal: Numeric value representing the hydration goal for the day.
      * - user_id: Foreign key referencing the user associated with the hydration record.
@@ -82,24 +86,24 @@ class DatabaseManager(
      */
     private val createHydrationTable = """
         CREATE TABLE HydrationForDay (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT,
+            user_id INTEGER,
             value_of_day INTEGER,
             goal INTEGER,
-            user_id INTEGER,
-            deleted_at TEXT DEFAULT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        );"""
+            PRIMARY KEY (date, user_id),
+            FOREIGN KEY (user_id) REFERENCES Users(id)
+        );
+    """
 
     /**
      * SQL statement for creating the "Users" table in the database.
      *
-     * The table includes fields for storing user information, such as username,
+     * The table includes fields for storing user information, such as email,
      * hashed password, salt, creation timestamp, and deletion timestamp.
      *
      * Table Columns:
      * - id: Unique identifier for each user.
-     * - username: The username of the user.
+     * - email: The email of the user UNIQUE.
      * - hashed_password: The hashed password of the user.
      * - salt: The salt used for password hashing.
      * - created_at: Date and time when the user account was created.
@@ -108,12 +112,13 @@ class DatabaseManager(
     private val createUsersTable = """
         CREATE TABLE Users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
+            email TEXT UNIQUE,
             hashed_password TEXT,
             salt TEXT,
             created_at TEXT,
             deleted_at TEXT DEFAULT NULL
-        );"""
+        );
+    """
 
     /**
      * SQL statement for creating the "UserProfile" table in the database.
@@ -122,7 +127,7 @@ class DatabaseManager(
      * activity level, height, and weight, linked to a user.
      *
      * Table Columns:
-     * - id: Unique identifier for each user profile.
+     * - user_id: Foreign key referencing the user associated with the profile.
      * - name: The name associated with the user profile.
      * - gender: The gender of the user.
      * - activity_level: The activity level of the user.
@@ -136,16 +141,16 @@ class DatabaseManager(
      */
     private val createUserProfileTable = """
         CREATE TABLE UserProfile (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER PRIMARY KEY,
             name TEXT,
             gender TEXT,
             activity_level TEXT,
             height FLOAT,
             weight FLOAT,
-            user_id INTEGER,
             deleted_at TEXT DEFAULT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        );"""
+        );
+    """
 
     /**
      * SQL statement for dropping the "Users" table from the database if it exists.
@@ -168,16 +173,19 @@ class DatabaseManager(
      * database to ensure initial data is available for testing.
      *
      * Test User Values:
-     * - Username: 'test'
+     * - Email: 'test'
      * - Hashed Password: 'hashed1'
      * - Salt: 'salt1'
      * - Created At: '2022-01-01'
      *
      * @param db The SQLiteDatabase instance for executing SQL statements.
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun insertTestUsers(db: SQLiteDatabase?) {
-        // Insert hardcoded user values for testing
-        db?.execSQL("INSERT INTO users (username, hashed_password, salt, created_at) VALUES ('test', 'hashed1', 'salt1', '2022-01-01')")
+        val password = "testPassword"
+        val salt = generateSalt()
+        val hashedPassword = hashPassword(password, salt)
+        db?.execSQL("INSERT INTO users (email, hashed_password, salt, created_at) VALUES ('test', '$hashedPassword', '$salt', '2022-01-01')")
     }
 
     /**
@@ -187,20 +195,23 @@ class DatabaseManager(
      * and inserts the user's information into the "Users" table. The hashed password and
      * salt are stored to enhance security.
      *
-     * @param username The username of the new user.
+     * @param email The email of the new user.
      * @param hashedPassword The hashed password of the new user.
-     * @param createdAt The timestamp indicating when the user account was created.
      * @return The row ID of the newly inserted user, or -1 if an error occurred.
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    fun insertUser(username: String, hashedPassword: String, createdAt: String): Long {
+    fun insertUser(email: String, hashedPassword: String): Long {
         val values = ContentValues()
         val salt = generateSalt()
+        val currentDate = LocalDate.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val dateString = currentDate.format(formatter)
+
         val populatedHashedPassword = hashPassword(hashedPassword, salt)
-        values.put("username", username)
+        values.put("email", email)
         values.put("hashed_password", populatedHashedPassword)
         values.put("salt", salt)
-        values.put("created_at", createdAt)
+        values.put("created_at", dateString)
 
         val db = writableDatabase
         return db.insert("Users", null, values)
@@ -210,38 +221,36 @@ class DatabaseManager(
      * Updates the user information in the "Users" table of the database.
      *
      * This function generates a new random salt, hashes the provided new password with the salt,
-     * and updates the user's information (username, hashed password, salt) in the "Users" table.
+     * and updates the user's information (hashed password, salt) in the "Users" table.
      * The new hashed password and salt are stored to enhance security.
      *
-     * @param userId The unique identifier of the user to be updated.
-     * @param newUsername The new username for the user.
+     * @param email The unique identifier of the user to be updated.
      * @param newHashedPassword The new hashed password for the user.
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    fun updateUser(userId: Long, newUsername: String, newHashedPassword: String) {
+    fun updatePassword(email: String, newHashedPassword: String) {
         val values = ContentValues()
         val salt = generateSalt()
         val hashedPassword = hashPassword(newHashedPassword, salt)
-        values.put("username", newUsername)
         values.put("hashed_password", hashedPassword)
         values.put("salt", salt)
 
         val db = writableDatabase
-        db.update("Users", values, "id=?", arrayOf(userId.toString()))
+        db.update("Users", values, "email=?", arrayOf(email))
     }
 
     /**
      * Verifies a login attempt by comparing the entered password with the stored hashed password.
      *
-     * @param username The username for the login attempt.
+     * @param email The email for the login attempt.
      * @param enteredPassword The password entered by the user for the login attempt.
      * @return `true` if the login is successful; `false` otherwise.
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    fun verifyLogin(username: String, enteredPassword: String): Boolean {
-        val (storedUsername, storedHashedPassword, storedSalt) = getUserCredentialsForLogin(username)
+    fun verifyLogin(email: String, enteredPassword: String): Boolean {
+        val (storedEmail, storedHashedPassword, storedSalt) = getUserCredentialsForLogin(email)
 
-        if (storedUsername != null && storedHashedPassword != null && storedSalt != null) {
+        if (storedEmail != null && storedHashedPassword != null && storedSalt != null) {
             val hashedEnteredPassword = hashPassword(enteredPassword, storedSalt)
 
             return hashedEnteredPassword == storedHashedPassword
@@ -251,13 +260,35 @@ class DatabaseManager(
     }
 
     /**
+     * Checks if the provided email is present in the database.
+     *
+     * This function queries the database for the provided email using the `getUserCredentialsForLogin` function.
+     * If the email is found in the database, the function returns `false`. If the email is not found, the function returns `true`.
+     *
+     * @param email The email to check in the database.
+     * @return `false` if the email is found in the database, `true` otherwise.
+     */
+    fun isEmailPresent(email: String): Boolean {
+        val storedEmail = getUserCredentialsForLogin(email).first
+        Log.d("Database", "Email Present: $storedEmail")
+        if (storedEmail != null) {
+            return true
+        }
+
+        return false
+    }
+
+
+    /**
      * Retrieves user profile information from the "UserProfile" table.
      *
-     * @param userId The unique identifier of the user whose profile information is to be retrieved.
-     * @return An instance of UserProfileInfo containing the retrieved user profile information.
+     * @param email The email of the user
+     * @return An instance of UserProfileInfo containing the retrieved user profile information,
+     * or null if no profile is found.
      */
-    fun getUserProfile(userId: Long): UserInfo{
+    fun getUserProfile(email: String): UserInfo?{
         val db = readableDatabase
+        val userId = getUserIdByEmail(db, email)
         val cursor = db.query(
             "UserProfile",
             arrayOf("name", "gender", "activity_level","height","weight"),
@@ -286,28 +317,34 @@ class DatabaseManager(
                 activityLevel = getColumnValue("activity_level")
                 height = getColumnValue("height")?.toFloatOrNull()
                 weight = getColumnValue("weight")?.toFloatOrNull()
+            } else {
+                // No user profile found, return null
+                return null
             }
         }
 
-        return UserInfo(name, gender, activityLevel,height,weight)
+        return UserInfo(name, gender, activityLevel, height, weight)
     }
 
     /**
-     * Inserts user profile information into the "UserProfile" table.
+     * Updates or inserts user profile information into the "UserProfile" table.
      *
-     * @param userId The unique identifier of the user to whom the profile information belongs.
+     * @param email The email associated with the user.
      * @param name The name associated with the user profile.
      * @param gender The gender of the user.
      * @param activityLevel The activity level of the user.
+     * @param height The height of the user.
+     * @param weight The weight of the user.
      */
-    fun insertUserProfile(
-        userId: Long,
+    fun upsertUserProfile(
+        email: String,
         name: String,
         gender: String,
         activityLevel: String,
         height: Float,
         weight: Float
     ) {
+        val userId = getUserIdByEmail(readableDatabase, email)
         val values = ContentValues().apply {
             put("name", name)
             put("gender", gender)
@@ -318,9 +355,12 @@ class DatabaseManager(
         }
 
         val db = writableDatabase
-        db.insert("UserProfile", null, values)
-    }
+        val affectedRows = db.update("UserProfile", values, "user_id = ?", arrayOf(userId.toString()))
 
+        if (affectedRows == 0) {
+            db.insert("UserProfile", null, values)
+        }
+    }
 
     /**
      * Hashes a password with a salt using the SHA-256 algorithm.
@@ -353,22 +393,22 @@ class DatabaseManager(
     /**
      * Retrieves user credentials for login from the "Users" table.
      *
-     * @param username The username of the user to retrieve credentials for.
-     * @return A Triple containing the retrieved username, hashed password, and salt.
+     * @param email The email of the user to retrieve credentials for.
+     * @return A Triple containing the retrieved email, hashed password, and salt.
      */
-    private fun getUserCredentialsForLogin(username: String): Triple<String?, String?, String?> {
+    private fun getUserCredentialsForLogin(email: String): Triple<String?, String?, String?> {
         val db = readableDatabase
         val cursor = db.query(
             "Users",
-            arrayOf("username", "hashed_password", "salt"),
-            "username=?",
-            arrayOf(username),
+            arrayOf("email", "hashed_password", "salt"),
+            "email=?",
+            arrayOf(email),
             null,
             null,
             null
         )
 
-        var storedUsername: String? = null
+        var storedEmail: String? = null
         var storedHashedPassword: String? = null
         var storedSalt: String? = null
 
@@ -379,12 +419,40 @@ class DatabaseManager(
                     if (columnIndex != -1) it.getString(columnIndex) else null
                 }
 
-                storedUsername = getColumnValue("username")
+                storedEmail = getColumnValue("email")
                 storedHashedPassword = getColumnValue("hashed_password")
                 storedSalt = getColumnValue("salt")
             }
         }
 
-        return Triple(storedUsername, storedHashedPassword, storedSalt)
+        return Triple(storedEmail, storedHashedPassword, storedSalt)
+    }
+
+    /**
+     * Gets the user_id associated with the given email from the "Users" table.
+     *
+     * @param db The readable database instance.
+     * @param email The email of the user.
+     * @return The user_id associated with the email, or null if not found.
+     */
+    private fun getUserIdByEmail(db: SQLiteDatabase, email: String): Int? {
+        val cursor = db.query(
+            "Users",
+            arrayOf("id"),
+            "email=?",
+            arrayOf(email),
+            null,
+            null,
+            null
+        )
+
+        return cursor.use {
+            if (it.moveToFirst()) {
+                val columnIndex = it.getColumnIndex("id")
+                if (columnIndex != -1) it.getInt(columnIndex) else null
+            } else {
+                null
+            }
+        }
     }
 }

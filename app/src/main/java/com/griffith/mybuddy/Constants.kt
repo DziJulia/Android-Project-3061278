@@ -1,13 +1,7 @@
 package com.griffith.mybuddy
 
-import android.database.sqlite.SQLiteDatabase
-
 object Constants {
-    //DATABASE CONSTANTS
-    private lateinit var databaseManager: DatabaseManager
-    private lateinit var database: SQLiteDatabase
-
-    //API KEYES
+    //API KEYS
     const val API_KEY_WEATHER = "5e99e2e828c2a3d4b57fab4f8772528f"
     // const val API_KEY_LOCATION = "64d3b25aa4da48c7a43665b24067b2e7"
 
@@ -19,6 +13,7 @@ object Constants {
     const val NO_ACTIVE = 0f
 
     //ERROR CONSTANTS
+    const val ERR_EXIST = "Email already exist! Please Login!"
     const val ERR_LEN = "Password must have at least eight characters!"
     const val ERR_WHITESPACE = "Password must not contain whitespace!"
     const val ERR_DIGIT = "Password must contain at least one digit!"
