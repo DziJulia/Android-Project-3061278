@@ -1,10 +1,12 @@
 package com.griffith.mybuddy
 
 import android.database.sqlite.SQLiteDatabase
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,6 +45,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import java.time.LocalDate
 import kotlin.math.roundToInt
 
 /**
@@ -72,17 +75,21 @@ class Profile : ComponentActivity() {
             }
         }
     }
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onResume() {
         super.onResume()
+
+        val dateString = LocalDate.now().format(AppVariables.formatter)
         // Get the instance of databaseManager
         databaseManager = DatabaseManagerSingleton.getInstance(this)
         // Re-open the database connection in onResume
         database = databaseManager.writableDatabase
 
-        Log.d("RETRIEVED", "AppVariables.emailAddress.value: ${AppVariables.emailAddress.value}")
         // Load the user profile from the database
         val userProfile = databaseManager.getUserProfile(AppVariables.emailAddress.value)
+        val hydrationTable = databaseManager.fetchHydrationData(AppVariables.emailAddress.value, dateString)
         Log.d("RETRIEVED", "userProfile: $userProfile")
+
         if (userProfile != null) {
             // Update your fields here
             AppVariables.name.value = userProfile.name ?: ""
@@ -91,8 +98,16 @@ class Profile : ComponentActivity() {
             AppVariables.height.value = userProfile.height.toString()
             AppVariables.weight.value = userProfile.weight.toString()
         }
+
+        //Retrieve values for hydration levels
+        if (hydrationTable != Pair(null, null)) {
+            val (goal, value) = hydrationTable
+            AppVariables.hydrationGoal.value = goal.toString()
+            AppVariables.hydrationLevel = value ?: 0
+        }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onStop() {
         super.onStop()
 
@@ -105,6 +120,7 @@ class Profile : ComponentActivity() {
             AppVariables.height.value.toFloat(),
             AppVariables.weight.value.toFloat()
         )
+        CommonFun.updateHydrationData(databaseManager)
     }
 }
 

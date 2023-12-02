@@ -1,10 +1,14 @@
 package com.griffith.mybuddy
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * This object holds the global variables for the application.
@@ -104,4 +108,10 @@ object AppVariables {
      * It's a mutable state, so it can be observed for changes.
      */
     val password2 = mutableStateOf("")
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    val dateString = LocalDate.now().format(formatter)
 }

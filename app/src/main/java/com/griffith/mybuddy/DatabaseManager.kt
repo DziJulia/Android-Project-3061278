@@ -10,8 +10,6 @@ import androidx.annotation.RequiresApi
 import java.security.SecureRandom
 import java.util.Base64
 import java.security.MessageDigest
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 /**
  * Manages the creation and upgrading of the SQLite database for the application.
@@ -182,9 +180,9 @@ class DatabaseManager(
      */
     @RequiresApi(Build.VERSION_CODES.O)
     private fun insertTestUsers(db: SQLiteDatabase?) {
-        val password = "testPassword"
         val salt = generateSalt()
-        val hashedPassword = hashPassword(password, salt)
+        val hashedPassword = hashPassword("testPassword", salt)
+
         db?.execSQL("INSERT INTO users (email, hashed_password, salt, created_at) VALUES ('test', '$hashedPassword', '$salt', '2022-01-01')")
     }
 
@@ -201,22 +199,16 @@ class DatabaseManager(
      */
     @RequiresApi(Build.VERSION_CODES.O)
     fun insertUser(email: String, hashedPassword: String): Long {
-        val values = ContentValues()
         val salt = generateSalt()
-        val currentDate = LocalDate.now()
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        val dateString = currentDate.format(formatter)
+        val values = ContentValues().apply {
+            put("email", email)
+            put("hashed_password", hashPassword(hashedPassword, salt))
+            put("salt", salt)
+            put("created_at", AppVariables.dateString)
+        }
 
-        val populatedHashedPassword = hashPassword(hashedPassword, salt)
-        values.put("email", email)
-        values.put("hashed_password", populatedHashedPassword)
-        values.put("salt", salt)
-        values.put("created_at", dateString)
-
-        val db = writableDatabase
-        return db.insert("Users", null, values)
+        return writableDatabase.insert("Users", null, values)
     }
-
     /**
      * Updates the user information in the "Users" table of the database.
      *
@@ -229,14 +221,71 @@ class DatabaseManager(
      */
     @RequiresApi(Build.VERSION_CODES.O)
     fun updatePassword(email: String, newHashedPassword: String) {
-        val values = ContentValues()
         val salt = generateSalt()
-        val hashedPassword = hashPassword(newHashedPassword, salt)
-        values.put("hashed_password", hashedPassword)
-        values.put("salt", salt)
+        val values = ContentValues().apply {
+            put("hashed_password", hashPassword(newHashedPassword, salt))
+            put("salt", salt)
+        }
 
-        val db = writableDatabase
-        db.update("Users", values, "email=?", arrayOf(email))
+        writableDatabase.update("Users", values, "email=?", arrayOf(email))
+    }
+
+    /**
+     * This function updates the goal and date in the `HydrationForDay` table in the database.
+     *
+     * @param email The email of the user for which the goal needs to be updated.
+     * @param date The date for which the goal needs to be updated. It is a string in the format 'YYYY-MM-DD'.
+     * @param goal The new hydration goal for the specified date. It is an integer representing the amount of water (in milliliters) the user aims to drink.
+     * @param value The value user drink for the specified date
+     *
+     * This function first retrieves the user ID associated with the given email by calling the `getUserIdByEmail` function.
+     * Then, it either inserts a new record with the specified date, user ID, and goal, or updates the goal of an existing record with the same date and user ID.
+     * The decision between insertion and update is made based on whether a record with the specified date and user ID already exists in the table.
+     *
+     * Note: This function assumes that `getUserIdByEmail` is a valid function that returns a user ID given an email, and that the provided email corresponds to a valid user in the `Users` table of the database.
+     */
+    fun updateHydrationTable(email: String, date: String, goal: Int, value: Int) {
+        val values = ContentValues().apply {
+            put("date", date)
+            put("user_id", getUserIdByEmail(readableDatabase, email))
+            put("goal", goal)
+            put("value_of_day", value)
+        }
+
+        writableDatabase.insertWithOnConflict("HydrationForDay", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    /**
+     * Fetches the hydration goal and value of the day for a given user and date.
+     *
+     * @param email The email of the user.
+     * @param date The date for which the hydration data is to be fetched.
+     * @return A pair of integers where the first integer is the hydration goal and the second integer is the value of the day.
+     * If no matching record is found, returns a pair of null values.
+     */
+    fun fetchHydrationData(email: String, date: String): Pair<Int?, Int?> {
+        val userId = getUserIdByEmail(readableDatabase, email)
+        val cursor = readableDatabase.query(
+            "HydrationForDay",
+            arrayOf("goal", "value_of_day"),
+            "user_id=? AND date=?",
+            arrayOf(userId.toString(), date),
+            null,
+            null,
+            null
+        )
+
+        return cursor.use {
+            if (it.moveToFirst()) {
+                val goalIndex = it.getColumnIndex("goal")
+                val valueIndex = it.getColumnIndex("value_of_day")
+                val goal = if (goalIndex != -1) it.getInt(goalIndex) else null
+                val value = if (valueIndex != -1) it.getInt(valueIndex) else null
+                Pair(goal, value)
+            } else {
+                Pair(null, null)
+            }
+        }
     }
 
     /**
@@ -271,6 +320,7 @@ class DatabaseManager(
     fun isEmailPresent(email: String): Boolean {
         val storedEmail = getUserCredentialsForLogin(email).first
         Log.d("Database", "Email Present: $storedEmail")
+
         if (storedEmail != null) {
             return true
         }
@@ -354,11 +404,10 @@ class DatabaseManager(
             put("user_id", userId)
         }
 
-        val db = writableDatabase
-        val affectedRows = db.update("UserProfile", values, "user_id = ?", arrayOf(userId.toString()))
+        val affectedRows = writableDatabase.update("UserProfile", values, "user_id = ?", arrayOf(userId.toString()))
 
         if (affectedRows == 0) {
-            db.insert("UserProfile", null, values)
+            writableDatabase.insert("UserProfile", null, values)
         }
     }
 

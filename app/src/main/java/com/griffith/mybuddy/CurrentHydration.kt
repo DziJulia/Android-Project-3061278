@@ -8,16 +8,19 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.database.sqlite.SQLiteDatabase
 import androidx.compose.ui.graphics.SweepGradient
 import android.health.connect.datatypes.ExerciseRoute
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -100,6 +103,10 @@ import kotlin.math.min
  * 3061278
  * https://github.com/DziJulia/Android-Project-3061278
  */
+
+private lateinit var databaseManager: DatabaseManager
+private lateinit var database: SQLiteDatabase
+
 class CurrentHydration : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -156,7 +163,31 @@ class CurrentHydration : ComponentActivity() {
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
             }
         }
+    }
 
+    override fun onResume() {
+        super.onResume()
+
+        // Get the instance of databaseManager
+        databaseManager = DatabaseManagerSingleton.getInstance(this)
+        // Re-open the database connection in onResume
+        database = databaseManager.writableDatabase
+
+        val hydrationTable = databaseManager.fetchHydrationData(AppVariables.emailAddress.value, AppVariables.dateString)
+
+        //Retrieve values for hydration levels
+        if (hydrationTable != Pair(null, null)) {
+            val (goal, value) = hydrationTable
+            AppVariables.hydrationGoal.value = goal.toString()
+            AppVariables.hydrationLevel = value ?: 0
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onStop() {
+        super.onStop()
+
+        CommonFun.updateHydrationData(databaseManager)
     }
 }
 
