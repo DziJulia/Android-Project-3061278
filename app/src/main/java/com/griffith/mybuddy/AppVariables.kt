@@ -113,5 +113,5 @@ object AppVariables {
     val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
     @RequiresApi(Build.VERSION_CODES.O)
-    val dateString = LocalDate.now().format(formatter)
+    val dateString: String = LocalDate.now().format(formatter)
 }
