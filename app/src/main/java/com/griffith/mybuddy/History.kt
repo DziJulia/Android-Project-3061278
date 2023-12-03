@@ -299,7 +299,8 @@ fun WaterIntakeGraph() {
     val hydrationData = fetchHydrationData()
     AppVariables.hydrationGoalData = hydrationData.sumOf { it.first }
     AppVariables.hydrationLevelData = hydrationData.sumOf { it.second }
-
+    Log.d("DATAGOAL", "AppVariables.hydrationGoalData: ${AppVariables.hydrationGoalData}")
+    Log.d("DATAGOAL", "AppVariables.hydrationLevelData : ${AppVariables.hydrationLevelData}")
     Column(modifier = Modifier
         .fillMaxWidth()
         .fillMaxHeight()) {
@@ -399,15 +400,13 @@ private fun DisplayYearlyWaterIntake(hydrationData: List<Triple<Int, Int, Int>>)
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Constants.MONTHS.indices.forEach { index ->
-                DisplayMonthlyWaterIntake(monthData[index], goalDataArray[index])
-            }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Constants.MONTHS.forEach { month ->
-                Text(month)
+                Box(
+                    modifier = Modifier.fillMaxHeight(),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    DisplayMonthlyWaterIntake(monthData[index], goalDataArray[index])
+                    Text(Constants.MONTHS[index])
+                }
             }
         }
     }

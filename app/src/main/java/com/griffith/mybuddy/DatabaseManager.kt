@@ -270,7 +270,7 @@ class DatabaseManager(
         val userId = getUserIdByEmail(readableDatabase, email)
         var startDate = date
         var endDate = date
-        var month = date.substring(5, 7).toInt()
+        val month = date.substring(5, 7).toInt()
         Log.d("DATABASE", "start: $date")
         Log.d("DATABASE", "month: $month")
 
@@ -303,9 +303,15 @@ class DatabaseManager(
         Log.d("DATABASE", "data: $data")
 
         if (period == "year") {
+            val cal = Calendar.getInstance()
             for (i in 1..12) {
-                month = i
-                fetchAndAddData(userId!!, startDate, endDate, month, data)
+                cal.set(Calendar.YEAR, date.substring(0, 4).toInt())
+                cal.set(Calendar.MONTH, i - 1)
+                cal.set(Calendar.DAY_OF_MONTH, 1)
+                startDate = AppVariables.sdf.format(cal.time)
+                cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
+                endDate = AppVariables.sdf.format(cal.time)
+                fetchAndAddData(userId!!, startDate, endDate, i, data)
             }
         } else {
             fetchAndAddData(userId!!, startDate, endDate, month, data)
@@ -315,6 +321,14 @@ class DatabaseManager(
         return data
     }
 
+    /**
+     * This function fetches hydration data for a given user and date range, and adds it to a provided list.
+     * @param userId The ID of the user for whom the data is being fetched.
+     * @param startDate The start date of the period for which the data is being fetched.
+     * @param endDate The end date of the period for which the data is being fetched.
+     * @param month The month for which the data is being fetched. This is used when adding data to the list.
+     * @param data The list to which the fetched data is added. Each element in the list is a Triple containing the hydration goal, the value for the day, and the month.
+     */
     private fun fetchAndAddData(userId: Int, startDate: String, endDate: String, month: Int, data: MutableList<Triple<Int, Int, Int>>) {
         val cursor = readableDatabase.query(
             "HydrationForDay",
@@ -330,14 +344,13 @@ class DatabaseManager(
             while (it.moveToNext()) {
                 val goalIndex = it.getColumnIndex("goal")
                 val valueIndex = it.getColumnIndex("value_of_day")
-                val goal = if (goalIndex != -1) it.getInt(goalIndex) else null
-                val value = if (valueIndex != -1) it.getInt(valueIndex) else null
-                if (goal != null && value != null) {
-                    data.add(Triple(goal, value, month))
-                }
+                val goal = if (goalIndex != -1) it.getInt(goalIndex) else 0
+                val value = if (valueIndex != -1) it.getInt(valueIndex) else 0
+                data.add(Triple(goal, value, month))
             }
         }
     }
+
 
     /**
      * Fetches the hydration goal and value of the day for a given user and date.
