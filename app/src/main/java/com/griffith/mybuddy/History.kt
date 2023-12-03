@@ -1,7 +1,8 @@
 package com.griffith.mybuddy
 
-import android.content.res.Configuration
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
@@ -27,14 +28,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.times
-import java.lang.Float.min
+import java.lang.Float.max
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -44,6 +44,9 @@ import java.util.Locale
  * 3061278
  * https://github.com/DziJulia/Android-Project-3061278
  */
+
+private lateinit var databaseManager: DatabaseManager
+private lateinit var database: SQLiteDatabase
 class History : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +68,25 @@ class History : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+
+        // Get the instance of databaseManager
+        databaseManager = DatabaseManagerSingleton.getInstance(this)
+        // Re-open the database connection in onResume
+        database = databaseManager.writableDatabase
+    }
+
+    /**
+     * This function is called before the activity is destroyed.
+     * It closes the database connection.
+     */
+    override fun onDestroy() {
+        super.onDestroy()
+        // Close the database connection in onDestroy
+        database.close()
+    }
 }
 
 /**
@@ -75,16 +97,29 @@ fun TimeSelectionCard(selectedDate: MutableState<Date>, selectedButton: MutableS
     Card(modifier = Modifier
         .fillMaxWidth()
         .height(40.dp)
-        .padding(end = if (isLandscape()) 70.dp else 0.dp)
+        .padding(end = if (CommonFun.isLandscape()) 70.dp else 0.dp)
     ) {
         BoxWithConstraints {
             val buttonWidth = maxWidth / 4
 
             Row(modifier = Modifier.fillMaxWidth()) {
-                TimeSelectionButton("D", buttonWidth, selectedButton.value == "D", selectedDate) { selectedButton.value = "D" }
-                TimeSelectionButton("W", buttonWidth, selectedButton.value == "W", selectedDate) { selectedButton.value = "W" }
-                TimeSelectionButton("M", buttonWidth, selectedButton.value == "M", selectedDate) { selectedButton.value = "M" }
-                TimeSelectionButton("Y", buttonWidth, selectedButton.value == "Y", selectedDate) { selectedButton.value = "Y"}
+                TimeSelectionButton("D", buttonWidth, selectedButton.value == "D", selectedDate) {
+                    selectedButton.value = "D"
+                    selectedDate.value = Date()
+                    AppVariables.period.value = "day"
+                }
+                TimeSelectionButton("W", buttonWidth, selectedButton.value == "W", selectedDate) {
+                    selectedButton.value = "W"
+                    AppVariables.period.value = "week"
+                }
+                TimeSelectionButton("M", buttonWidth, selectedButton.value == "M", selectedDate) {
+                    selectedButton.value = "M"
+                    AppVariables.period.value = "month"
+                }
+                TimeSelectionButton("Y", buttonWidth, selectedButton.value == "Y", selectedDate) {
+                    selectedButton.value = "Y"
+                    AppVariables.period.value = "year"
+                }
             }
         }
     }
@@ -103,21 +138,20 @@ fun TimeSelectionButton(text: String, width: Dp, selected: Boolean = false, sele
     val calendar = java.util.Calendar.getInstance()
 
     when (text) {
-        "D" -> { calendar.time = Date() }
         "W" -> { calendar.add(java.util.Calendar.WEEK_OF_YEAR, -1) }
         "M" -> { calendar.set(java.util.Calendar.DAY_OF_MONTH, 1) }
         "Y" -> { calendar.add(java.util.Calendar.YEAR, -1) }
     }
 
-    val newSelectedDate = calendar.time
+    AppVariables.newSelectedDate.value = calendar.time
 
     Box(
         modifier = Modifier
             .requiredWidth(width)
             .clickable(onClick = {
                 onClick()
-                selectedDate.value = newSelectedDate
-                println("Selected date: $newSelectedDate")
+                selectedDate.value = AppVariables.newSelectedDate.value
+                println("Selected date: ${AppVariables.newSelectedDate.value}")
             })
             .background(color = if (selected) colorResource(id = R.color.deepSkyBlueColor) else Color.White)
             .padding(top = 2.dp, bottom = 2.dp),
@@ -159,11 +193,15 @@ fun DateNavigationRow(selectedDate: MutableState<Date>, selectedButton: MutableS
             textAlign = TextAlign.Center
         )
         NavigationButton(selectedDate, selectedButton, 1, ">")
+
+        AppVariables.newSelectedDate.value = selectedDate.value
+        Log.d("NEWDATE", " AppVariables.newSelectedDate.value: ${ AppVariables.newSelectedDate.value}")
     }
 }
 
 /**
  * Constructs a navigation button that modifies the selected date based on the selected button and direction.
+ * User cannot select dates or months or years in future only in the past.
  * @param selectedDate The currently selected date.
  * @param selectedButton The currently selected button.
  * @param direction The direction of navigation (forward or backward).
@@ -178,10 +216,21 @@ fun NavigationButton(selectedDate: MutableState<Date>, selectedButton: MutableSt
             val calendar = java.util.Calendar.getInstance()
             calendar.time = selectedDate.value
             when (selectedButton.value) {
-                "D" -> calendar.add(java.util.Calendar.DAY_OF_YEAR, direction)
-                "W" -> calendar.add(java.util.Calendar.WEEK_OF_YEAR, direction)
-                "M" -> calendar.add(java.util.Calendar.MONTH, direction)
-                "Y" -> calendar.add(java.util.Calendar.YEAR, direction)
+                "D" -> {
+                    if (direction < 0 || calendar.get(java.util.Calendar.DAY_OF_YEAR) < java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR)) {
+                        calendar.add(java.util.Calendar.DAY_OF_YEAR, direction)
+                    }
+                    AppVariables.period.value = "day"
+                }
+                "W" -> if (direction < 0 || calendar.get(java.util.Calendar.WEEK_OF_YEAR) < java.util.Calendar.getInstance().get(java.util.Calendar.WEEK_OF_YEAR)) {
+                    calendar.add(java.util.Calendar.WEEK_OF_YEAR, direction)
+                }
+                "M" -> if (direction < 0 || calendar.get(java.util.Calendar.MONTH) < java.util.Calendar.getInstance().get(java.util.Calendar.MONTH)) {
+                    calendar.add(java.util.Calendar.MONTH, direction)
+                }
+                "Y" -> if (direction < 0 || calendar.get(java.util.Calendar.YEAR) < java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)) {
+                    calendar.add(java.util.Calendar.YEAR, direction)
+                }
             }
             selectedDate.value = calendar.time
         },
@@ -206,8 +255,8 @@ fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<Str
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                bottom = if (isLandscape()) 0.dp else 100.dp,
-                end = if (isLandscape()) 70.dp else 0.dp
+                bottom = if (CommonFun.isLandscape()) 0.dp else 100.dp,
+                end = if (CommonFun.isLandscape()) 70.dp else 0.dp
             )
             .wrapContentHeight(Alignment.CenterVertically),
     ) {
@@ -225,8 +274,17 @@ fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<Str
                 color =  Color(192, 226, 236),
                 thickness = 1.dp
             )
-            Text("Total ", textAlign = TextAlign.Start)
-            Text("${AppVariables.hydrationLevel} ml", textAlign = TextAlign.Start)
+            if(AppVariables.period.value == "day") {
+                Text("Total ", textAlign = TextAlign.Start, style = TextStyle(fontSize = 22.sp))
+            } else {
+                Text("Average ", textAlign = TextAlign.Start)
+            }
+            Text(
+                "${AppVariables.hydrationLevelData} ml",
+                textAlign = TextAlign.Start,
+                style = TextStyle(fontSize = 25.sp),
+                color = Color.Blue
+            )
             WaterIntakeGraph()
         }
     }
@@ -238,57 +296,164 @@ fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<Str
  */
 @Composable
 fun WaterIntakeGraph() {
-    val graphData = AppVariables.hydrationLevel.toFloat()
-    val goalData = AppVariables.hydrationGoal.value.toFloat()
-
-    // Calculate the number of increments (each increment is 1000ml)
-    val increments = (goalData / 1000).toInt()
-    val remaining = goalData % 1000
+    val hydrationData = fetchHydrationData()
+    AppVariables.hydrationGoalData = hydrationData.sumOf { it.first }
+    AppVariables.hydrationLevelData = hydrationData.sumOf { it.second }
 
     Column(modifier = Modifier
         .fillMaxWidth()
         .fillMaxHeight()) {
         Spacer(modifier = Modifier.weight(1f))
 
-        if (remaining > 0) {
-            val currentIncrement = min(remaining, graphData - increments * 1000)
+        val remaining = AppVariables.hydrationLevelData.toFloat()
+        if (AppVariables.period.value == "year") {
+            DisplayYearlyWaterIntake(hydrationData)
+        }else if (remaining > 0) {
+            DisplayRemainingWaterIntake(remaining)
+        }
+    }
+}
 
+/**
+ * This function displays the remaining water intake in a graphical form.
+ * @param remaining The remaining amount of water intake needed to reach the goal.
+ *
+ * The function calculates the current increment of water intake and displays it as a part of a Box composable.
+ * The height of the Box is proportional to the ratio of the current increment to the total goal.
+ * If the current increment is greater than 0, a dashed divider and a text displaying the remaining amount in milliliters are added to the Box.
+ */
+@Composable
+private fun DisplayRemainingWaterIntake(remaining: Float) {
+    val totalIncrements = (AppVariables.hydrationGoalData.toFloat() / 1000).toInt()
+    val remainingIncrement = AppVariables.hydrationGoalData.toFloat() % 1000
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .height(200.dp)
+            .fillMaxWidth()
+    ) {
+        val height = (constraints.maxHeight.toFloat() / 2)
+
+        // Hydration level
+        Box(
+            modifier = Modifier
+                .height(((remaining / AppVariables.hydrationGoalData.toFloat()) * height).dp)
+                .fillMaxWidth()
+                .background(if (remaining > 0) colorResource(id = R.color.deepSkyBlueColor) else Color.Transparent)
+                .align(Alignment.BottomStart)
+        )
+
+        // Hydration goal
+        for (i in totalIncrements downTo 1) {
             Box(
                 modifier = Modifier
-                    .height((currentIncrement / goalData) * 200.dp)
-                    .fillMaxWidth()
-                    .background(if (currentIncrement > 0) colorResource(id = R.color.deepSkyBlueColor) else Color.Transparent),
-                contentAlignment = Alignment.TopCenter
+                    .align(Alignment.BottomCenter)
+                    .offset(y = -((height / totalIncrements * i).dp))
             ) {
-                if (currentIncrement > 0) {
-                    DashedDivider()
-                    Text("${remaining.toInt()} ml", color = Color.DarkGray)
-                }
+                DashedDivider()
+                Text(
+                    "${i * 1000} ml",
+                    color = Color.DarkGray,
+                    textAlign = TextAlign.Center
+                )
             }
         }
-
-        for (i in increments - 1 downTo 0) {
-            val currentIncrement = min(1000f, graphData - i * 1000)
-            val remainingGoal = (i + 1) * 1000f
-
+        if (remainingIncrement > 0) {
             Box(
-                modifier = Modifier
-                    .height((currentIncrement / goalData) * 200.dp)
-                    .fillMaxWidth()
-                    .background(
-                        if (remainingGoal > 0 && currentIncrement > 0) colorResource(id = R.color.deepSkyBlueColor) else Color.Transparent
-                    ),
-                contentAlignment = Alignment.TopCenter
+                modifier = Modifier.align(Alignment.BottomCenter)
             ) {
-                if (remainingGoal > 0 && currentIncrement > 0) {
-                    DashedDivider()
-                    Text("${remainingGoal.toInt()} ml", color = Color.DarkGray)
-                }
+                DashedDivider()
+                Text(
+                    "${remainingIncrement.toInt()} ml",
+                    color = Color.DarkGray,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
 }
 
+/**
+ * This function displays the yearly water intake in a graphical form.
+ * @param hydrationData The list of hydration data fetched from the database. Each element is a Triple where the first element is the hydration data, the second element is the hydration goal, and the third element is the month index.
+ *
+ * The function calculates the total hydration data and goal for each month and displays them as a part of a Box composable in a Row. The height of each Box is proportional to the ratio of the hydration data to the total goal for the corresponding month.
+ * If the hydration data for a month is greater than 0, a dashed divider and a text displaying the hydration data in milliliters are added to the Box.
+ * The month labels are displayed in a separate Row at the bottom of the Column.
+ */
+@Composable
+private fun DisplayYearlyWaterIntake(hydrationData: List<Triple<Int, Int, Int>>) {
+    val monthData = Array(12) { 0f }
+    val goalDataArray = Array(12) { 0f }
+
+    // Assign the hydration data and goal to the corresponding month
+    hydrationData.forEach { triple ->
+        val monthIndex = triple.third - 1
+        monthData[monthIndex] += triple.second.toFloat()
+        goalDataArray[monthIndex] += triple.first.toFloat()
+    }
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Constants.MONTHS.indices.forEach { index ->
+                DisplayMonthlyWaterIntake(monthData[index], goalDataArray[index])
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Constants.MONTHS.forEach { month ->
+                Text(month)
+            }
+        }
+    }
+}
+
+/**
+ * A composable function that displays the monthly water intake.
+ * @param monthData The amount of water consumed in the month.
+ * @param goalData The goal amount of water to be consumed in the month.
+ *
+ * The function creates a Column with the month name and a Box representing the water intake.
+ * The height of the Box is proportional to the ratio of `monthData` to `goalData`.
+ * If `monthData` is greater than 0, the Box is filled with a color (deepSkyBlueColor)
+ * Otherwise, the Box is transparent.
+ */
+@Composable
+private fun DisplayMonthlyWaterIntake(monthData: Float, goalData: Float) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .height((monthData / max(1f, goalData)) * 200.dp)
+                .width(20.dp)
+                .background(if (monthData > 0) colorResource(id = R.color.deepSkyBlueColor) else Color.Transparent)
+        )
+    }
+}
+
+/**
+ * Fetches hydration data from the database for a specific period.
+ *
+ * @return A list of Triple objects. Each Triple contains three Int values.
+ *
+ * The function fetches hydration data for the period specified in `AppVariables.period.value`.
+ * The data is fetched for the user with the email address specified in `AppVariables.emailAddress.value`.
+ * The date for which the data is fetched is specified in `AppVariables.newSelectedDate.value`.
+ * The date is formatted using `AppVariables.sdf.format()`.
+ *
+ * The hydration data is fetched using `databaseManager.fetchHydrationDataForPeriod()`.
+ */
+private fun fetchHydrationData(): List<Triple<Int, Int, Int>> {
+    return databaseManager.fetchHydrationDataForPeriod(
+        AppVariables.emailAddress.value,
+        AppVariables.period.value,
+        AppVariables.sdf.format(AppVariables.newSelectedDate.value).toString()
+    )
+}
 
 /**
  * This function creates a dashed divider line using the Canvas composable in Jetpack Compose.
@@ -341,13 +506,4 @@ fun getFormattedDate(selectedDate: MutableState<Date>, selectedButton: MutableSt
         }
         else -> dateFormat.format(selectedDate.value)
     }
-}
-
-/**
- * Function that checks whether the current device orientation is landscape.
- * @return true if the device is in landscape orientation, false otherwise.
- */
-@Composable
-fun isLandscape(): Boolean {
-    return LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 }

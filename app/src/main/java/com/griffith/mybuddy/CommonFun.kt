@@ -1,7 +1,11 @@
 package com.griffith.mybuddy
 
+import android.content.res.Configuration
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalConfiguration
 
 object CommonFun {
     /**
@@ -24,5 +28,15 @@ object CommonFun {
             AppVariables.hydrationGoal.value.toInt(),
             AppVariables.hydrationLevel
         )
+        Log.d("hydrationTable", "hydrationLevelDATA: ${AppVariables.hydrationLevel}")
+    }
+
+    /**
+     * Function that checks whether the current device orientation is landscape.
+     * @return true if the device is in landscape orientation, false otherwise.
+     */
+    @Composable
+    fun isLandscape(): Boolean {
+        return LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 }

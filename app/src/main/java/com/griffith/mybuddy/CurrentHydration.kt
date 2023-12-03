@@ -124,7 +124,7 @@ class CurrentHydration : ComponentActivity() {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = if (isLandscape()) Alignment.Start else Alignment.CenterHorizontally
+                    horizontalAlignment = if (CommonFun.isLandscape()) Alignment.Start else Alignment.CenterHorizontally
                 ) {
                     AddSpacer(20.dp)
                     Text(
@@ -132,7 +132,7 @@ class CurrentHydration : ComponentActivity() {
                         modifier = Modifier.align(Alignment.Start).padding(start = 10.dp),
                         style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold)
                     )
-                    if (isLandscape()) {
+                    if (CommonFun.isLandscape()) {
                         Row() {
                             Column(
                                 modifier = Modifier.weight(1f).offset(x = 80.dp, y = 20.dp),
@@ -174,6 +174,8 @@ class CurrentHydration : ComponentActivity() {
         database = databaseManager.writableDatabase
 
         val hydrationTable = databaseManager.fetchHydrationData(AppVariables.emailAddress.value, AppVariables.dateString)
+        Log.d("hydrationTable", "hydrationTable: $hydrationTable")
+        Log.d("hydrationTable", "hydrationLevelApp: ${AppVariables.hydrationLevel}")
 
         //Retrieve values for hydration levels
         if (hydrationTable != Pair(null, null)) {
@@ -186,8 +188,18 @@ class CurrentHydration : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onStop() {
         super.onStop()
-
+        Log.d("hydrationTableIN method", "hydrationLevelApp: ${AppVariables.hydrationLevel}")
         CommonFun.updateHydrationData(databaseManager)
+    }
+
+    /**
+     * This function is called before the activity is destroyed.
+     * It closes the database connection.
+     */
+    override fun onDestroy() {
+        super.onDestroy()
+        // Close the database connection in onDestroy
+        database.close()
     }
 }
 
@@ -369,8 +381,8 @@ fun sendNotification(context: Context) {
  * If the device is not in landscape mode, it returns 150.dp for width and 60.dp for height.
  */
 @Composable
-fun buttonSize(): Pair<Dp, Dp> {
-    return if (isLandscape()) Pair(150.dp, 35.dp) else Pair(150.dp, 60.dp)
+fun ButtonSize(): Pair<Dp, Dp> {
+    return if (CommonFun.isLandscape()) Pair(150.dp, 35.dp) else Pair(150.dp, 60.dp)
 }
 
 /**
@@ -380,8 +392,8 @@ fun buttonSize(): Pair<Dp, Dp> {
  * If the device is not in landscape mode, it returns 350.dp for width and 200.dp for height.
  */
 @Composable
-fun circleSize(): Pair<Dp, Dp> {
-    return if (isLandscape()) Pair(350.dp, 180.dp) else Pair(350.dp, 200.dp)
+fun CircleSize(): Pair<Dp, Dp> {
+    return if (CommonFun.isLandscape()) Pair(350.dp, 180.dp) else Pair(350.dp, 200.dp)
 }
 
 /**
@@ -391,7 +403,7 @@ fun circleSize(): Pair<Dp, Dp> {
  */
 @Composable
 fun WaterButton(text: String, onClick: () -> Unit) {
-    val (width, height) = buttonSize()
+    val (width, height) = ButtonSize()
 
     Button(
         onClick = onClick,
@@ -466,12 +478,12 @@ fun CustomAmountDialog(context: Context) {
 fun WaterButtons() {
     val context = LocalContext.current
     val buttonLabels = listOf("Water 250ml", "Water 300ml", "Water 500ml", "Add ml")
-    if (!isLandscape()) { AddSpacer(20.dp) }
+    if (!CommonFun.isLandscape()) { AddSpacer(20.dp) }
 
     CustomAmountDialog(context)
 
     Column(verticalArrangement = Arrangement.SpaceEvenly) {
-        if (isLandscape()) {
+        if (CommonFun.isLandscape()) {
             buttonLabels.forEachIndexed { index, label ->
                 when (index) {
                     0 -> WaterButton(label) { AppVariables.hydrationLevel += 250 }
@@ -497,6 +509,7 @@ fun WaterButtons() {
             }
         }
     }
+    CommonFun.updateHydrationData(databaseManager)
 }
 
 /**
@@ -515,7 +528,7 @@ fun HydrationCircle() {
         0
     }
 
-    val (blueSize, whiteSize) = circleSize()
+    val (blueSize, whiteSize) = CircleSize()
     Box(modifier = Modifier.size(blueSize), contentAlignment = Alignment.Center) {
         // Bigger Blue Circle
         // This creates a Canvas composable that matches the size of its parent.

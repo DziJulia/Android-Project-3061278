@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi
 import java.security.SecureRandom
 import java.util.Base64
 import java.security.MessageDigest
+import java.util.Calendar
 
 /**
  * Manages the creation and upgrading of the SQLite database for the application.
@@ -248,11 +249,94 @@ class DatabaseManager(
         val values = ContentValues().apply {
             put("date", date)
             put("user_id", getUserIdByEmail(readableDatabase, email))
-            put("goal", goal)
             put("value_of_day", value)
+            put("goal", goal)
         }
 
         writableDatabase.insertWithOnConflict("HydrationForDay", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    /**
+     * Fetches the hydration goal and value of the day for a given user and date range.
+     *
+     * @param email The email of the user.
+     * @param period The period for which the hydration data is to be fetched. It can be "date", "week", "month", or "year".
+     * @param date The date of the period for which the hydration data is to be fetched.
+     * @return A list of triple of integers where each triple represents the hydration goal and value of the day for a
+     * particular date and month if we query year
+     * If no matching record is found, returns an empty list.
+     */
+    fun fetchHydrationDataForPeriod(email: String, period: String, date: String): List<Triple<Int, Int, Int>> {
+        val userId = getUserIdByEmail(readableDatabase, email)
+        var startDate = date
+        var endDate = date
+        var month = date.substring(5, 7).toInt()
+        Log.d("DATABASE", "start: $date")
+        Log.d("DATABASE", "month: $month")
+
+        when (period) {
+            "week" -> {
+                val cal = Calendar.getInstance()
+                cal.time = AppVariables.sdf.parse(date)!!
+                cal.firstDayOfWeek = Calendar.MONDAY
+                cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+                startDate = AppVariables.sdf.format(cal.time)
+                cal.add(Calendar.DATE, 6)
+                endDate = AppVariables.sdf.format(cal.time)
+            }
+            "month" -> {
+                // Assuming the date format is "yyyy-MM-dd"
+                startDate = date.substring(0, 8) + "01"
+                val cal = Calendar.getInstance()
+                cal.time = AppVariables.sdf.parse(startDate)!!
+                cal.add(Calendar.MONTH, 1)
+                cal.add(Calendar.DATE, -1)
+                endDate = AppVariables.sdf.format(cal.time)
+            }
+            "year" -> {
+                startDate = date.substring(0, 5) + "01-01"
+                endDate = date.substring(0, 5) + "12-31"
+            }
+        }
+
+        val data = mutableListOf<Triple<Int, Int, Int>>()
+        Log.d("DATABASE", "data: $data")
+
+        if (period == "year") {
+            for (i in 1..12) {
+                month = i
+                fetchAndAddData(userId!!, startDate, endDate, month, data)
+            }
+        } else {
+            fetchAndAddData(userId!!, startDate, endDate, month, data)
+        }
+
+        Log.d("DATABASE", "data: $data")
+        return data
+    }
+
+    private fun fetchAndAddData(userId: Int, startDate: String, endDate: String, month: Int, data: MutableList<Triple<Int, Int, Int>>) {
+        val cursor = readableDatabase.query(
+            "HydrationForDay",
+            arrayOf("goal", "value_of_day"),
+            "user_id=? AND date BETWEEN ? AND ?",
+            arrayOf(userId.toString(), startDate, endDate),
+            null,
+            null,
+            null
+        )
+
+        cursor.use {
+            while (it.moveToNext()) {
+                val goalIndex = it.getColumnIndex("goal")
+                val valueIndex = it.getColumnIndex("value_of_day")
+                val goal = if (goalIndex != -1) it.getInt(goalIndex) else null
+                val value = if (valueIndex != -1) it.getInt(valueIndex) else null
+                if (goal != null && value != null) {
+                    data.add(Triple(goal, value, month))
+                }
+            }
+        }
     }
 
     /**
@@ -281,6 +365,8 @@ class DatabaseManager(
                 val valueIndex = it.getColumnIndex("value_of_day")
                 val goal = if (goalIndex != -1) it.getInt(goalIndex) else null
                 val value = if (valueIndex != -1) it.getInt(valueIndex) else null
+                Log.d("hydrationTable", "Pair(goal, value): ${Pair(goal, value)}")
+
                 Pair(goal, value)
             } else {
                 Pair(null, null)

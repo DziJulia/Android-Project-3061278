@@ -109,6 +109,10 @@ class Login : ComponentActivity() {
         }
     }
 
+    /**
+     * This function is called before the activity is destroyed.
+     * It closes the database connection.
+     */
     override fun onDestroy() {
         super.onDestroy()
         // Close the database connection in onDestroy
@@ -126,7 +130,7 @@ fun SetupUI(navController: NavController) {
     val context = LocalContext.current
     val password = remember { mutableStateOf("") }
 
-    if (!isLandscape()) {
+    if (!CommonFun.isLandscape()) {
         Box(modifier = Modifier
             .fillMaxSize()
             .offset(y = 50.dp)) {
@@ -189,7 +193,7 @@ fun SetupUI(navController: NavController) {
                 }
             }
         }
-    } else if (isLandscape()) {
+    } else if (CommonFun.isLandscape()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Row(
                 modifier = Modifier
@@ -574,10 +578,10 @@ fun MyButtonsRow() {
 
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = if (isLandscape()) Arrangement.Center else Arrangement.Bottom,
-        horizontalAlignment = if (isLandscape()) Alignment.End else Alignment.CenterHorizontally
+        verticalArrangement = if (CommonFun.isLandscape()) Arrangement.Center else Arrangement.Bottom,
+        horizontalAlignment = if (CommonFun.isLandscape()) Alignment.End else Alignment.CenterHorizontally
     ) {
-        if (!isLandscape()) {
+        if (!CommonFun.isLandscape()) {
             Divider(
                 color = colorResource(id = R.color.deepSkyBlueColor),
                 thickness = 3.dp

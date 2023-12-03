@@ -64,7 +64,7 @@ class Profile : ComponentActivity() {
             Box(modifier = Modifier.fillMaxSize()) {
                 MyButtonsRow()
                 LogOutButton(modifier = Modifier.align(Alignment.TopEnd))
-                Column(modifier = Modifier.padding(16.dp, end = if (isLandscape()) 70.dp else 0.dp)) {
+                Column(modifier = Modifier.padding(16.dp, end = if (CommonFun.isLandscape()) 70.dp else 0.dp)) {
                     AddSpacer(20.dp)
                     Text(
                         "Profile",
@@ -75,6 +75,14 @@ class Profile : ComponentActivity() {
             }
         }
     }
+
+    /**
+     * This function is called when the activity will start interacting with the user.
+     * It retrieves the user profile and hydration data from the database and updates the AppVariables accordingly.
+     * It requires API level 26 and above (Android 8.0, Oreo).
+     *
+     * @RequiresApi(Build.VERSION_CODES.O)
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onResume() {
         super.onResume()
@@ -107,6 +115,13 @@ class Profile : ComponentActivity() {
         }
     }
 
+    /**
+     * This function is called when the activity is no longer visible to the user.
+     * It updates the user profile in the database with the latest values of the user's details.
+     * It requires API level 26 and above (Android 8.0, Oreo).
+     *
+     * @RequiresApi(Build.VERSION_CODES.O)
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onStop() {
         super.onStop()
@@ -120,7 +135,19 @@ class Profile : ComponentActivity() {
             AppVariables.height.value.toFloat(),
             AppVariables.weight.value.toFloat()
         )
+
         CommonFun.updateHydrationData(databaseManager)
+    }
+
+
+    /**
+     * This function is called before the activity is destroyed.
+     * It closes the database connection.
+     */
+    override fun onDestroy() {
+        super.onDestroy()
+        // Close the database connection in onDestroy
+        database.close()
     }
 }
 
