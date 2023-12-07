@@ -3,6 +3,7 @@ package com.griffith.mybuddy
 import android.content.Intent
 import android.content.res.Configuration
 import android.database.sqlite.SQLiteDatabase
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -52,7 +53,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 
 /**
@@ -63,7 +67,22 @@ import java.util.regex.Pattern
 private lateinit var databaseManager: DatabaseManager
 private lateinit var database: SQLiteDatabase
 
+/**
+ * `Login` is an activity that serves as the entry point for user authentication.
+ * It extends `ComponentActivity`, which is a base class for activities
+ * that enables composition as a means of creating your UI.
+ */
 class Login : ComponentActivity() {
+
+    /**
+     * Called when the activity is starting. This is where most initialization
+     * should go: calling `setContentView(int)` to inflate the activity's UI,
+     * using `findViewById(int)` to programmatically interact with widgets in the UI.
+     *
+     * @param savedInstanceState If the activity is being re-initialized after
+     * previously being shut down then this Bundle contains the data it most
+     * recently supplied in `onSaveInstanceState(Bundle)`. Note: Otherwise it is null.
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,6 +103,11 @@ class Login : ComponentActivity() {
         }
     }
 
+    /**
+     * Called when the activity will start interacting with the user.
+     * At this point your activity is at the top of the activity stack,
+     * with user input going to it.
+     */
     override fun onResume() {
         super.onResume()
         super.onResume()
@@ -93,17 +117,30 @@ class Login : ComponentActivity() {
         database = databaseManager.writableDatabase
     }
 
+    /**
+     * Called when the system is about to start resuming a previous activity.
+     * This is typically used to commit unsaved changes to persistent data,
+     * stop animations and other things that may be consuming CPU, etc.
+     * Implementations of this method must be very quick because the next
+     * activity will not be resumed until this method returns.
+     *
+     * @RequiresApi(Build.VERSION_CODES.O) - This annotation informs the
+     * compiler that this method should only be called on the specified API
+     * level (in this case, API level 26, which corresponds to Android 8.0 Oreo) or higher.
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onStop() {
         super.onStop()
 
         //Only update on registration
         if(AppVariables.registration) {
-            // Update the user profile in the database
-            databaseManager.insertUser(
-                AppVariables.emailAddressRegistration.value,
-                AppVariables.password1.value
-            )
+            CoroutineScope(Dispatchers.IO).launch {
+                // Update the user profile in the database
+                databaseManager.insertUser(
+                    AppVariables.emailAddressRegistration.value,
+                    AppVariables.password1.value
+                )
+            }
 
             AppVariables.registration = false
         }
@@ -671,6 +708,8 @@ fun ForgotPasswordPopup(onDismiss: () -> Unit, onSendEmail: (String) -> Unit) {
  */
 @Composable
 fun ForgotPasswordButton() {
+    val context = LocalContext.current
+
     Button(
         onClick = { AppVariables.isForgotPasswordPopupVisible = true },
         colors = ButtonDefaults.buttonColors(
@@ -683,9 +722,18 @@ fun ForgotPasswordButton() {
     if (AppVariables.isForgotPasswordPopupVisible) {
         ForgotPasswordPopup(
             onDismiss = { AppVariables.isForgotPasswordPopupVisible = false },
-            onSendEmail = {
-                // TODO: Add logic to send email
-                //sendPasswordResetEmail(emailAddress.value)
+            onSendEmail = { emailAddress ->
+                val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:")
+                    putExtra(Intent.EXTRA_EMAIL, arrayOf(emailAddress))
+                    putExtra(Intent.EXTRA_SUBJECT, "Password Reset Request")
+                    putExtra(Intent.EXTRA_TEXT, "You have requested to reset your password. Please click the link below to reset your password.\n\nReset Password")
+                }
+                if (emailIntent.resolveActivity(context.packageManager) != null) {
+                    context.startActivity(emailIntent)
+                } else {
+                    Toast.makeText(context, "No email client available", Toast.LENGTH_SHORT).show()
+                }
             }
         )
     }

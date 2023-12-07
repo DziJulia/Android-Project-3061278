@@ -7,10 +7,16 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.security.SecureRandom
 import java.util.Base64
 import java.security.MessageDigest
+import java.time.Year
 import java.util.Calendar
+import java.util.Random
 
 /**
  * Manages the creation and upgrading of the SQLite database for the application.
@@ -29,8 +35,7 @@ class DatabaseManager(
     name: String,
     factory: SQLiteDatabase.CursorFactory?,
     version: Int
-): SQLiteOpenHelper(context, name, factory, version)
-{
+): SQLiteOpenHelper(context, name, factory, version) {
     /**
      * Called when the database is created for the first time. This method is responsible for
      * executing SQL statements to create initial tables and insert test data.
@@ -43,7 +48,10 @@ class DatabaseManager(
         p0?.execSQL(createHydrationTable)
         p0?.execSQL(createUserProfileTable)
 
-        insertTestUsers(p0)
+        CoroutineScope(Dispatchers.IO).launch {
+            insertTestUsers(p0)
+            insertTestData(p0)
+        }
     }
 
     /**
@@ -65,7 +73,10 @@ class DatabaseManager(
         p0?.execSQL(createHydrationTable)
         p0?.execSQL(createUserProfileTable)
 
-        insertTestUsers(p0)
+        CoroutineScope(Dispatchers.IO).launch {
+            insertTestUsers(p0)
+            insertTestData(p0)
+        }
     }
 
     /**
@@ -155,37 +166,16 @@ class DatabaseManager(
      * SQL statement for dropping the "Users" table from the database if it exists.
      */
     private val dropUsersTable = "DROP TABLE IF EXISTS Users"
+
     /**
      * SQL statement for dropping the "HydrationForDay" table from the database if it exists.
      */
     private val dropHydrationTable = "DROP TABLE IF EXISTS HydrationForDay"
+
     /**
      * SQL statement for dropping the "UserProfile" table from the database if it exists.
      */
     private val dropProfileTable = "DROP TABLE IF EXISTS UserProfile"
-
-    /**
-     * Inserts test user values into the "Users" table for testing purposes.
-     *
-     * This function is used to populate the "Users" table with hardcoded user values
-     * during testing. It is typically called during the creation or upgrade of the
-     * database to ensure initial data is available for testing.
-     *
-     * Test User Values:
-     * - Email: 'test'
-     * - Hashed Password: 'hashed1'
-     * - Salt: 'salt1'
-     * - Created At: '2022-01-01'
-     *
-     * @param db The SQLiteDatabase instance for executing SQL statements.
-     */
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun insertTestUsers(db: SQLiteDatabase?) {
-        val salt = generateSalt()
-        val hashedPassword = hashPassword("testPassword", salt)
-
-        db?.execSQL("INSERT INTO users (email, hashed_password, salt, created_at) VALUES ('test', '$hashedPassword', '$salt', '2022-01-01')")
-    }
 
     /**
      * Inserts a new user into the "Users" table of the database.
@@ -210,6 +200,7 @@ class DatabaseManager(
 
         return writableDatabase.insert("Users", null, values)
     }
+
     /**
      * Updates the user information in the "Users" table of the database.
      *
@@ -253,7 +244,12 @@ class DatabaseManager(
             put("goal", goal)
         }
 
-        writableDatabase.insertWithOnConflict("HydrationForDay", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        writableDatabase.insertWithOnConflict(
+            "HydrationForDay",
+            null,
+            values,
+            SQLiteDatabase.CONFLICT_REPLACE
+        )
     }
 
     /**
@@ -266,7 +262,11 @@ class DatabaseManager(
      * particular date and month if we query year
      * If no matching record is found, returns an empty list.
      */
-    fun fetchHydrationDataForPeriod(email: String, period: String, date: String): List<Triple<Int, Int, Int>> {
+    fun fetchHydrationDataForPeriod(
+        email: String,
+        period: String,
+        date: String
+    ): List<Triple<Int, Int, Int>> {
         val userId = getUserIdByEmail(readableDatabase, email)
         var startDate = date
         var endDate = date
@@ -284,6 +284,7 @@ class DatabaseManager(
                 cal.add(Calendar.DATE, 6)
                 endDate = AppVariables.sdf.format(cal.time)
             }
+
             "month" -> {
                 // Assuming the date format is "yyyy-MM-dd"
                 startDate = date.substring(0, 8) + "01"
@@ -293,6 +294,7 @@ class DatabaseManager(
                 cal.add(Calendar.DATE, -1)
                 endDate = AppVariables.sdf.format(cal.time)
             }
+
             "year" -> {
                 startDate = date.substring(0, 5) + "01-01"
                 endDate = date.substring(0, 5) + "12-31"
@@ -329,7 +331,13 @@ class DatabaseManager(
      * @param month The month for which the data is being fetched. This is used when adding data to the list.
      * @param data The list to which the fetched data is added. Each element in the list is a Triple containing the hydration goal, the value for the day, and the month.
      */
-    private fun fetchAndAddData(userId: Int, startDate: String, endDate: String, month: Int, data: MutableList<Triple<Int, Int, Int>>) {
+    private fun fetchAndAddData(
+        userId: Int,
+        startDate: String,
+        endDate: String,
+        month: Int,
+        data: MutableList<Triple<Int, Int, Int>>
+    ) {
         val cursor = readableDatabase.query(
             "HydrationForDay",
             arrayOf("goal", "value_of_day"),
@@ -435,12 +443,12 @@ class DatabaseManager(
      * @return An instance of UserProfileInfo containing the retrieved user profile information,
      * or null if no profile is found.
      */
-    fun getUserProfile(email: String): UserInfo?{
+    fun getUserProfile(email: String): UserInfo? {
         val db = readableDatabase
         val userId = getUserIdByEmail(db, email)
         val cursor = db.query(
             "UserProfile",
-            arrayOf("name", "gender", "activity_level","height","weight"),
+            arrayOf("name", "gender", "activity_level", "height", "weight"),
             "user_id=?",
             arrayOf(userId.toString()),
             null,
@@ -503,7 +511,12 @@ class DatabaseManager(
             put("user_id", userId)
         }
 
-        val affectedRows = writableDatabase.update("UserProfile", values, "user_id = ?", arrayOf(userId.toString()))
+        val affectedRows = writableDatabase.update(
+            "UserProfile",
+            values,
+            "user_id = ?",
+            arrayOf(userId.toString())
+        )
 
         if (affectedRows == 0) {
             writableDatabase.insert("UserProfile", null, values)
@@ -600,6 +613,73 @@ class DatabaseManager(
                 if (columnIndex != -1) it.getInt(columnIndex) else null
             } else {
                 null
+            }
+        }
+    }
+
+    //DEMO DATA
+
+    /**
+     * Inserts test user values into the "Users" table for testing purposes.
+     *
+     * This function is used to populate the "Users" table with hardcoded user values
+     * during testing. It is typically called during the creation or upgrade of the
+     * database to ensure initial data is available for testing.
+     *
+     * Test User Values:
+     * - Email: 'test'
+     * - Hashed Password: 'hashed1'
+     * - Salt: 'salt1'
+     * - Created At: '2022-01-01'
+     *
+     * @param db The SQLiteDatabase instance for executing SQL statements.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    private suspend fun insertTestUsers(db: SQLiteDatabase?) = withContext(Dispatchers.IO) {
+        val salt = generateSalt()
+        val hashedPassword = hashPassword("testPassword", salt)
+
+        db?.execSQL("INSERT INTO users (email, hashed_password, salt, created_at) VALUES ('test', '$hashedPassword', '$salt', '2022-01-01')")
+    }
+
+    /**
+     * This function is used to insert test data into the database.
+     * It runs on the IO dispatcher to avoid blocking the main thread.
+     *
+     * @param db The SQLiteDatabase instance where the data will be inserted.
+     *
+     * The function performs the following operations:
+     * 1. Inserts a test user profile into the UserProfile table.
+     * 2. Inserts hydration data for different dates within the current year and the previous year into the HydrationForDay table.
+     *
+     * The hydration data is generated as follows:
+     * - For each day of each month of the current year and the previous year, a random hydration value between 1000 and 4000 is generated.
+     * - This hydration value, along with the date and a fixed goal of 3000, is inserted into the HydrationForDay table for the test user.
+     *
+     * Note: This function is marked with the @RequiresApi annotation to indicate that it requires the API level specified (in this case, Build.VERSION_CODES.O) or higher.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    private suspend fun insertTestData(db: SQLiteDatabase?) = withContext(Dispatchers.IO) {
+        // Insert test user profiles
+        Log.d("DATABASE", "Getting DemoDATA")
+        db?.execSQL("INSERT INTO UserProfile (user_id, name, gender, activity_level, height, weight) VALUES (1, 'John Doe', 'Male', 'Active', 1.75, 70)")
+        Log.d("DATABASE", "Getting DemoDATA")
+        // Insert hydration data for different dates within this year and the previous year
+        val random = Random()
+        val currentYear = Year.now().value
+        val previousYear = currentYear - 1
+
+        for (year in listOf(previousYear, currentYear)) {
+            for (month in 1..12) {
+                // Use 28 to ensure we cover all months
+                for (day in 1..28) {
+                    val date = String.format("%04d-%02d-%02d", year, month, day)
+                    val valueOfDay =
+                        random.nextInt(3000) + 1000  // Random hydration value between 1000 and 4000
+                    val goal = 3000
+
+                    db?.execSQL("INSERT INTO HydrationForDay (date, user_id, value_of_day, goal) VALUES ('$date', 1, $valueOfDay, $goal)")
+                }
             }
         }
     }

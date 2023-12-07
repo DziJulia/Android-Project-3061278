@@ -45,6 +45,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import kotlin.math.roundToInt
 
@@ -93,25 +97,29 @@ class Profile : ComponentActivity() {
         // Re-open the database connection in onResume
         database = databaseManager.writableDatabase
 
-        // Load the user profile from the database
-        val userProfile = databaseManager.getUserProfile(AppVariables.emailAddress.value)
-        val hydrationTable = databaseManager.fetchHydrationData(AppVariables.emailAddress.value, dateString)
-        Log.d("RETRIEVED", "userProfile: $userProfile")
+        CoroutineScope(Dispatchers.IO).launch {
+            // Load the user profile from the database
+            val userProfile = databaseManager.getUserProfile(AppVariables.emailAddress.value)
+            val hydrationTable = databaseManager.fetchHydrationData(AppVariables.emailAddress.value, dateString)
+            Log.d("RETRIEVED", "userProfile: $userProfile")
 
-        if (userProfile != null) {
-            // Update your fields here
-            AppVariables.name.value = userProfile.name ?: ""
-            AppVariables.gender.value = userProfile.gender ?: ""
-            AppVariables.activityLevel.value = userProfile.activityLevel ?: ""
-            AppVariables.height.value = userProfile.height.toString()
-            AppVariables.weight.value = userProfile.weight.toString()
-        }
+            withContext(Dispatchers.Main) {
+                if (userProfile != null) {
+                    // Update your fields here
+                    AppVariables.name.value = userProfile.name ?: ""
+                    AppVariables.gender.value = userProfile.gender ?: ""
+                    AppVariables.activityLevel.value = userProfile.activityLevel ?: ""
+                    AppVariables.height.value = userProfile.height.toString()
+                    AppVariables.weight.value = userProfile.weight.toString()
+                }
 
-        //Retrieve values for hydration levels
-        if (hydrationTable != Pair(null, null)) {
-            val (goal, value) = hydrationTable
-            AppVariables.hydrationGoal.value = goal.toString()
-            AppVariables.hydrationLevel = value ?: 0
+                //Retrieve values for hydration levels
+                if (hydrationTable != Pair(null, null)) {
+                    val (goal, value) = hydrationTable
+                    AppVariables.hydrationGoal.value = goal.toString()
+                    AppVariables.hydrationLevel = value ?: 0
+                }
+            }
         }
     }
 
@@ -127,16 +135,19 @@ class Profile : ComponentActivity() {
         super.onStop()
 
         // Update the user profile in the database
-        databaseManager.upsertUserProfile(
-            AppVariables.emailAddress.value,
-            AppVariables.name.value,
-            AppVariables.gender.value,
-            AppVariables.activityLevel.value,
-            AppVariables.height.value.toFloat(),
-            AppVariables.weight.value.toFloat()
-        )
+        CoroutineScope(Dispatchers.IO).launch {
+            // Update the user profile in the database
+            databaseManager.upsertUserProfile(
+                AppVariables.emailAddress.value,
+                AppVariables.name.value,
+                AppVariables.gender.value,
+                AppVariables.activityLevel.value,
+                AppVariables.height.value.toFloat(),
+                AppVariables.weight.value.toFloat()
+            )
 
-        CommonFun.updateHydrationData(databaseManager)
+            CommonFun.updateHydrationData(databaseManager)
+        }
     }
 
 

@@ -6,7 +6,16 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
+/**
+ * The `CommonFun` object encapsulates all common functions used across the application.
+ *
+ * This object provides a centralized location for functions that are used in multiple places in the codebase,
+ * promoting code reuse and maintainability.
+ */
 object CommonFun {
     /**
      * Updates the hydration data in the database for the current user and date.
@@ -22,14 +31,17 @@ object CommonFun {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     fun updateHydrationData(databaseManager: DatabaseManager) {
-        databaseManager.updateHydrationTable(
-            AppVariables.emailAddress.value,
-            AppVariables.dateString,
-            AppVariables.hydrationGoal.value.toInt(),
-            AppVariables.hydrationLevel
-        )
-        Log.d("hydrationTable", "hydrationLevelDATA: ${AppVariables.hydrationLevel}")
+        CoroutineScope(Dispatchers.IO).launch {
+            databaseManager.updateHydrationTable(
+                AppVariables.emailAddress.value,
+                AppVariables.dateString,
+                AppVariables.hydrationGoal.value.toInt(),
+                AppVariables.hydrationLevel
+            )
+            Log.d("hydrationTable", "hydrationLevelDATA: ${AppVariables.hydrationLevel}")
+        }
     }
+
 
     /**
      * Function that checks whether the current device orientation is landscape.

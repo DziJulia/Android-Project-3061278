@@ -21,9 +21,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -34,6 +38,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.times
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import java.lang.Float.max
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -45,9 +53,40 @@ import java.util.Locale
  * https://github.com/DziJulia/Android-Project-3061278
  */
 
+/**
+ * A reference to the DatabaseManager instance.
+ */
 private lateinit var databaseManager: DatabaseManager
+
+/**
+ * A reference to the SQLiteDatabase instance.
+ */
 private lateinit var database: SQLiteDatabase
+
+/**
+ * A CoroutineScope instance with IO dispatcher.
+ * This scope is used to perform database operations off the main thread.
+ */
+private val scope = CoroutineScope(Dispatchers.IO)
+
+/**
+ * `History` is an activity that allows the user to view their hydration history.
+ * It extends `ComponentActivity`, which is a base class for activities
+ * that enables composition as a means of creating your UI.
+ *
+ * In this activity, users can see their previous water intake records
+ * and a calendar graph for a visual representation of their hydration history.
+ */
 class History : ComponentActivity() {
+    /**
+     * Called when the activity is starting. This is where most initialization
+     * should go: calling `setContentView(int)` to inflate the activity's UI,
+     * using `findViewById(int)` to programmatically interact with widgets in the UI.
+     *
+     * @param savedInstanceState If the activity is being re-initialized after
+     * previously being shut down then this Bundle contains the data it most
+     * recently supplied in `onSaveInstanceState(Bundle)`. Note: Otherwise it is null.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -69,6 +108,11 @@ class History : ComponentActivity() {
         }
     }
 
+    /**
+     * Called when the activity will start interacting with the user.
+     * At this point your activity is at the top of the activity stack,
+     * with user input going to it.
+     */
     override fun onResume() {
         super.onResume()
 
@@ -296,7 +340,13 @@ fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<Str
  */
 @Composable
 fun WaterIntakeGraph() {
-    val hydrationData = fetchHydrationData()
+    val scope = rememberCoroutineScope()
+    var hydrationData by remember { mutableStateOf(listOf<Triple<Int, Int, Int>>()) }
+
+    LaunchedEffect(key1 = Unit) {
+        hydrationData = scope.async { fetchHydrationData() }.await()
+    }
+
     AppVariables.hydrationGoalData = hydrationData.sumOf { it.first }
     AppVariables.hydrationLevelData = hydrationData.sumOf { it.second }
     Log.d("DATAGOAL", "AppVariables.hydrationGoalData: ${AppVariables.hydrationGoalData}")
@@ -446,12 +496,14 @@ private fun DisplayMonthlyWaterIntake(monthData: Float, goalData: Float) {
  *
  * The hydration data is fetched using `databaseManager.fetchHydrationDataForPeriod()`.
  */
-private fun fetchHydrationData(): List<Triple<Int, Int, Int>> {
-    return databaseManager.fetchHydrationDataForPeriod(
-        AppVariables.emailAddress.value,
-        AppVariables.period.value,
-        AppVariables.sdf.format(AppVariables.newSelectedDate.value).toString()
-    )
+private suspend fun fetchHydrationData(): List<Triple<Int, Int, Int>> {
+    return withContext(scope.coroutineContext) {
+        databaseManager.fetchHydrationDataForPeriod(
+            AppVariables.emailAddress.value,
+            AppVariables.period.value,
+            AppVariables.sdf.format(AppVariables.newSelectedDate.value).toString()
+        )
+    }
 }
 
 /**

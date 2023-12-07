@@ -1,5 +1,9 @@
 package com.griffith.mybuddy
 
+/**
+ * `Constants` is an object that holds all the constant values used throughout the application.
+ * It provides a centralized location for constants, making the code more maintainable.
+ */
 object Constants {
     //API KEYS
     const val API_KEY_WEATHER = "5e99e2e828c2a3d4b57fab4f8772528f"
