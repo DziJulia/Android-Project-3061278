@@ -417,6 +417,7 @@ fun ShowNumberInputDialog(label: String, value: MutableState<String>, openDialog
                         }
                     }
                 },
+                colors = CommonFun.textFieldColors(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
             )
@@ -456,7 +457,8 @@ fun ShowTextInputDialog(label: String, value: MutableState<String>, openDialog: 
         text = {
             TextField(
                 value = value.value,
-                onValueChange = { newValue -> value.value = newValue }
+                onValueChange = { newValue -> value.value = newValue },
+                colors = CommonFun.textFieldColors()
             )
         },
         confirmButton = {

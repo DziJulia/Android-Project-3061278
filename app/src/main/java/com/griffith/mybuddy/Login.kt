@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -356,10 +355,7 @@ fun NameField(email: MutableState<String>) {
             }
         },
         label = { Text("Email") },
-        colors = TextFieldDefaults.textFieldColors(
-            textColor = Color.Black,
-            containerColor = colorResource(id = R.color.buttonBackgroundColor)
-        ),
+        colors = CommonFun.textFieldColors(),
         // Hide keyboard when enter key is pressed
         keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
@@ -435,10 +431,7 @@ fun PasswordField(password: MutableState<String>) {
             }
         },
         label = { Text("Password") },
-        colors = TextFieldDefaults.textFieldColors(
-            textColor = Color.Black,
-            containerColor =  colorResource(id = R.color.buttonBackgroundColor)
-        ),
+        colors = CommonFun.textFieldColors(),
         visualTransformation = if (passwordVisibility.value) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             IconButton(onClick = {
@@ -657,7 +650,8 @@ fun ForgotPasswordPopup(onDismiss: () -> Unit, onSendEmail: (String) -> Unit) {
                 TextField(
                     value = AppVariables.forgotEmailAddress.value,
                     onValueChange = { AppVariables.forgotEmailAddress.value = it },
-                    label = { Text("Email Address") }
+                    label = { Text("Email Address") },
+                    colors = CommonFun.textFieldColors()
                 )
             }
         },
@@ -789,7 +783,8 @@ fun TokenVerificationDialog(onDismiss: () -> Unit, onTokenVerified: () -> Unit) 
                 TextField(
                     value = enteredToken,
                     onValueChange = { enteredToken = it },
-                    label = { Text("Code") }
+                    label = { Text("Code") },
+                    colors = CommonFun.textFieldColors()
                 )
                 CommonFun.StartCountdown(onCountdownOver = onDismiss)
             }

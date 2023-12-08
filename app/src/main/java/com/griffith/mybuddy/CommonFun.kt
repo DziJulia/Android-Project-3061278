@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -142,6 +145,21 @@ object CommonFun {
         return ButtonDefaults.buttonColors(
             Color.Transparent,
             contentColor = Color.Black
+        )
+    }
+
+    /**
+     * This function returns a TextFieldColors object with predefined colors.
+     * The text color is set to Black, and the container color is set to the color defined in R.color.buttonBackgroundColor.
+     *
+     * @return TextFieldColors object with specified textColor and containerColor.
+     */
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun textFieldColors(): TextFieldColors {
+        return TextFieldDefaults.textFieldColors(
+            textColor = Color.Black,
+            containerColor = colorResource(id = R.color.buttonBackgroundColor)
         )
     }
 

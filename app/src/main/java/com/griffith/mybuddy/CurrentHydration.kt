@@ -452,6 +452,7 @@ fun CustomAmountDialog(context: Context) {
             title = { Text(text = "Add Custom Amount") },
             text = {
                 TextField(
+                    colors = CommonFun.textFieldColors(),
                     value = customAmount,
                     onValueChange = { customAmount = it },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
