@@ -33,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -424,7 +423,7 @@ fun ShowNumberInputDialog(label: String, value: MutableState<String>, openDialog
                 onClick = {
                     openDialog.value = false
                 },
-                colors = ButtonDefaults.buttonColors(colorResource(id = R.color.deepSkyBlueColor))
+                colors = CommonFun.CustomButtonColors()
             ) {
                 Text(text = "Confirm", color = Color.Black)
             }
@@ -459,9 +458,9 @@ fun ShowTextInputDialog(label: String, value: MutableState<String>, openDialog: 
                 onClick = {
                     openDialog.value = false
                 },
-                colors = ButtonDefaults.buttonColors(colorResource(id = R.color.deepSkyBlueColor))
+                colors = CommonFun.CustomButtonColors()
             ) {
-                Text(text = "Confirm", color = Color.Black)
+                Text(text = "Confirm")
             }
         }
     )
@@ -504,10 +503,7 @@ fun SelectionPopup(label: String, value: MutableState<String>, options: List<Str
             Button(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.End).padding(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    colorResource(id = R.color.deepSkyBlueColor),
-                    contentColor = Color.Black
-                )
+                colors = CommonFun.CustomButtonColors()
             ) {
                 Text("Confirm")
             }

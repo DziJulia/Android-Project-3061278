@@ -29,6 +29,14 @@ object AppVariables {
     var hydrationGoal = mutableStateOf("3000")
 
     /**
+     * `resetToken, forgotEmailAddress` is a mutable state that holds the current about token and reset email.
+     * It's an string. This state is observed by Jetpack Compose and any changes to this state
+     * will recompose all composable that read this state.
+     */
+    var resetToken = mutableStateOf("")
+    var forgotEmailAddress = mutableStateOf("")
+
+    /**
      * `name` is a mutable state that holds the current information of user.
      * It's an string. This state is observed by Jetpack Compose and any changes to this state
      * will recompose all composable that read this state.

@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <style name="Theme.MyBuddy" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:textColor">@color/textColor</item>
         <item name="android:windowBackground">@color/activityBackground</item>
         <item name="android:background">@color/activityBackground</item>
-        <item name="android:button">@color/deepSkyBlueColor</item>
     </style>
 </resources>

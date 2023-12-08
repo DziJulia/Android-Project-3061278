@@ -2,19 +2,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- This permission allows the app to access the precise location of the device. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- This permission allows the app to access the approximate location of the device. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- This permission allows the app to open network sockets. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- This permission allows the app to access the Do Not Disturb settings of the user's device. -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- This permission is not a standard Android permission and may not work as expected. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/logo"
         android:label="@string/drink_up"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyBuddy"
         tools:targetApi="31">
@@ -40,7 +45,7 @@
             android:name=".Login"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="true"
-            android:label="@string/title_activity_login"
+            android:label="@string/drink_up"
             android:screenOrientation="fullSensor"
             android:theme="@style/Theme.MyBuddy">
             <intent-filter>

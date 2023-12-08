@@ -9,6 +9,10 @@ object Constants {
     const val API_KEY_WEATHER = "5e99e2e828c2a3d4b57fab4f8772528f"
     // const val API_KEY_LOCATION = "64d3b25aa4da48c7a43665b24067b2e7"
 
+    //EMAIL SENDER
+    const val EMAIL_PASSWORD = "uore ljjl vklo eyeo"
+    const val EMAIL = "drinkupapp123@gmail.com"
+
     val MONTHS = listOf("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D")
 
     //PROFILE CONSTANTS

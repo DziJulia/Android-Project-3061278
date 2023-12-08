@@ -488,7 +488,7 @@ fun CustomAmountDialog(context: Context) {
                             ).show()
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(colorResource(id = R.color.deepSkyBlueColor))
+                    colors = CommonFun.CustomButtonColors()
                 ) {
                     Text(text = "Confirm", color = Color.Black)
                 }
@@ -496,7 +496,7 @@ fun CustomAmountDialog(context: Context) {
             dismissButton = {
                 Button(
                     onClick = { AppVariables.showDialog = false },
-                    colors = ButtonDefaults.buttonColors(colorResource(id = R.color.deepSkyBlueColor))
+                    colors = CommonFun.CustomButtonColors()
                 ) {
                     Text(text = "Cancel", color = Color.Black)
                 }

@@ -1,9 +1,9 @@
 package com.griffith.mybuddy
 
+import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.database.sqlite.SQLiteDatabase
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -203,7 +203,7 @@ fun SetupUI(navController: NavController) {
                 }
                 NameField(AppVariables.emailAddress)
                 PasswordField(password)
-                ForgotPasswordButton()
+                ForgotPasswordButton(navController)
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
                 Button(
                     onClick = {
@@ -218,10 +218,7 @@ fun SetupUI(navController: NavController) {
                             Toast.makeText(context, "Invalid email or password", Toast.LENGTH_SHORT).show()
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        colorResource(id = R.color.deepSkyBlueColor),
-                        contentColor = Color.Black
-                    ),
+                    colors = CommonFun.CustomButtonColors(),
                     modifier = Modifier
                         .height(50.dp)
                         .width(200.dp)
@@ -262,19 +259,22 @@ fun SetupUI(navController: NavController) {
                     }
                     NameField(AppVariables.emailAddress)
                     PasswordField(password)
-                    ForgotPasswordButton()
-                    Button(onClick = {
-                        if (databaseManager.verifyLogin(AppVariables.emailAddress.value, password.value)) {
-                            // Verification successful, proceed to CurrentHydration activity
-                            val intent = Intent(context, CurrentHydration::class.java)
-                            context.startActivity(intent)
-                        }else {
-                            // Verification failed, handle the error (e.g., show an error message)
-                            // You can also clear the password field or take other actions as needed
-                            // For simplicity, I'm using a Toast to show an error message.
-                            Toast.makeText(context, "Invalid email or password", Toast.LENGTH_SHORT).show()
-                        }
-                    }) {
+                    ForgotPasswordButton(navController)
+                    Button(
+                        onClick = {
+                            if (databaseManager.verifyLogin(AppVariables.emailAddress.value, password.value)) {
+                                // Verification successful, proceed to CurrentHydration activity
+                                val intent = Intent(context, CurrentHydration::class.java)
+                                context.startActivity(intent)
+                            }else {
+                                // Verification failed, handle the error (e.g., show an error message)
+                                // You can also clear the password field or take other actions as needed
+                                // For simplicity, I'm using a Toast to show an error message.
+                                Toast.makeText(context, "Invalid email or password", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = CommonFun.CustomButtonColors()
+                    ) {
                         Text("Login")
                     }
                 }
@@ -293,8 +293,10 @@ fun MyAppNavigation() {
     NavHost(navController, startDestination = "login") {
         composable("login") { SetupUI(navController) }
         composable("register") { RegistrationScreen(navController) }
+        composable("resetPassword") { ResetPasswordScreen(navController) }
     }
 }
+
 
 /**
  * A composable function that represents the Registration Screen in the application.
@@ -304,18 +306,7 @@ fun MyAppNavigation() {
 fun RegistrationScreen(navController: NavController) {
     val context = LocalContext.current
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.logo),
-            contentDescription = "App Logo",
-            modifier = Modifier
-                .size(200.dp)
-                .clip(CircleShape)
-        )
+    CommonFun.LogoColumn {
         Button(
             onClick = { navController.popBackStack() },
             colors = ButtonDefaults.buttonColors(
@@ -323,7 +314,7 @@ fun RegistrationScreen(navController: NavController) {
                 contentColor = Color.Black
             )
         ) {
-            Text("Back to Login")
+            Text(text= "Back to Login", fontSize = 20.sp)
         }
         NameField(AppVariables.emailAddressRegistration)
         PasswordField(AppVariables.password1)
@@ -335,31 +326,19 @@ fun RegistrationScreen(navController: NavController) {
                 if (databaseManager.isEmailPresent(AppVariables.emailAddressRegistration.value)){
                     Toast.makeText(context, Constants.ERR_EXIST, Toast.LENGTH_SHORT).show()
                 }
-                // TODO need to add validation if email exist in the database
-                else if (AppVariables.emailAddressRegistration.value.isEmpty()){
+                else if(AppVariables.emailAddressRegistration.value.isEmpty()) {
                     Toast.makeText(context, Constants.ERR_NOT_EMPTY, Toast.LENGTH_SHORT).show()
                 }
-                else if (!AppVariables.emailAddressRegistration.value.isValidEmail()){
-                    Toast.makeText(context, Constants.ERR_NOT_VALID, Toast.LENGTH_SHORT).show()
+                else if(!AppVariables.emailAddressRegistration.value.isValidEmail()){
+                Toast.makeText(context, Constants.ERR_NOT_VALID, Toast.LENGTH_SHORT).show()
                 }
-                else if (AppVariables.password1.value.isValidatePassword().isNotEmpty()){
-                    Toast.makeText(context, AppVariables.password1.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
-                }
-                else if (AppVariables.password2.value.isValidatePassword().isNotEmpty()){
-                    Toast.makeText(context, AppVariables.password2.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
-                }
-                else if (AppVariables.password1.value != AppVariables.password2.value) {
-                    Toast.makeText(context, Constants.ERR_NOT_MATCH, Toast.LENGTH_SHORT).show()
-                } else {
+                else if (validatePassword(context)) {
                     AppVariables.registration = true
                     val intent = Intent(context, CurrentHydration::class.java)
                     context.startActivity(intent)
                 }
             },
-           colors = ButtonDefaults.buttonColors(
-               colorResource(id = R.color.deepSkyBlueColor),
-               contentColor = Color.Black
-            ),
+           colors = CommonFun.CustomButtonColors(),
             modifier = Modifier
                 .height(50.dp)
                 .width(200.dp)
@@ -578,8 +557,8 @@ fun IconImage(resourceId: Int, contentDescription: String, color: Color) {
  * @param onSelected The action to perform when the button is selected.
  */
 @Composable
-fun ButtonRowItem(text: String, destination: Class<*>, context: android.content.Context, isSelected: Boolean, onSelected: () -> Unit) {
-    val iconColor = if (isSelected) colorResource(id = R.color.deepSkyBlueColor)else Color.Black
+fun ButtonRowItem(text: String, destination: Class<*>, context: Context, isSelected: Boolean, onSelected: () -> Unit) {
+    val iconColor = if (isSelected) colorResource(id = R.color.deepSkyBlueColor) else Color.Black
     val iconResource = when (text) {
         "C" -> R.drawable.drop
         "P" -> R.drawable.profile
@@ -670,7 +649,7 @@ fun MyButtonsRow() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordPopup(onDismiss: () -> Unit, onSendEmail: (String) -> Unit) {
-    var forgotEmailAddress by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -679,22 +658,33 @@ fun ForgotPasswordPopup(onDismiss: () -> Unit, onSendEmail: (String) -> Unit) {
             Column {
                 Text("Please enter your email address:")
                 TextField(
-                    value = forgotEmailAddress,
-                    onValueChange = { forgotEmailAddress = it },
+                    value = AppVariables.forgotEmailAddress.value,
+                    onValueChange = { AppVariables.forgotEmailAddress.value = it },
                     label = { Text("Email Address") }
                 )
             }
         },
         confirmButton = {
-            Button(onClick = {
-                onSendEmail(forgotEmailAddress)
-                onDismiss()
-            }) {
+            Button(
+                onClick = {
+                    if (databaseManager.isEmailPresent(AppVariables.forgotEmailAddress.value)) {
+                        onSendEmail(AppVariables.forgotEmailAddress.value)
+                        onDismiss()
+                    } else {
+                        // Display an error message
+                        Toast.makeText(context, "Email not found", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                colors = CommonFun.CustomButtonColors()
+            ) {
                 Text("Send Email")
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
+            Button(
+                onClick = onDismiss,
+                colors = CommonFun.CustomButtonColors()
+            ) {
                 Text("Cancel")
             }
         }
@@ -707,8 +697,8 @@ fun ForgotPasswordPopup(onDismiss: () -> Unit, onSendEmail: (String) -> Unit) {
  * which triggers the `ForgotPasswordPopup` to be displayed.
  */
 @Composable
-fun ForgotPasswordButton() {
-    val context = LocalContext.current
+fun ForgotPasswordButton(navController: NavController) {
+    var tokenVerified by remember { mutableStateOf(false) }
 
     Button(
         onClick = { AppVariables.isForgotPasswordPopupVisible = true },
@@ -723,20 +713,137 @@ fun ForgotPasswordButton() {
         ForgotPasswordPopup(
             onDismiss = { AppVariables.isForgotPasswordPopupVisible = false },
             onSendEmail = { emailAddress ->
-                val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                    data = Uri.parse("mailto:")
-                    putExtra(Intent.EXTRA_EMAIL, arrayOf(emailAddress))
-                    putExtra(Intent.EXTRA_SUBJECT, "Password Reset Request")
-                    putExtra(Intent.EXTRA_TEXT, "You have requested to reset your password. Please click the link below to reset your password.\n\nReset Password")
-                }
-                if (emailIntent.resolveActivity(context.packageManager) != null) {
-                    context.startActivity(emailIntent)
-                } else {
-                    Toast.makeText(context, "No email client available", Toast.LENGTH_SHORT).show()
-                }
+                val emailSender = EmailSender()
+                emailSender.sendEmail(emailAddress)
+                tokenVerified = true
             }
+        )
+    }
+
+    if (tokenVerified) {
+        TokenVerificationDialog(
+            onDismiss = { /* Handle dismiss */ },
+            onTokenVerified = {
+                navController.navigate("resetPassword")
+            },
         )
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun ResetPasswordScreen(navController: NavController) {
+    val context = LocalContext.current
+    CommonFun.LogoColumn {
+        Text(
+            text = "Please enter your new password:",
+            fontSize = 20.sp
+        )
 
+        PasswordField(AppVariables.password1)
+        PasswordField(AppVariables.password2)
+
+        Button(
+            onClick = {
+               if (validatePassword(context)) {
+                   // Update the password in your database
+                   databaseManager.updatePassword(AppVariables.forgotEmailAddress.value, AppVariables.password1.value)
+                   // Navigate back to the login screen
+                   navController.navigate("login")
+                }
+            },
+            colors = CommonFun.CustomButtonColors()
+        ) {
+            Text("Update Password")
+        }
+    }
+}
+
+/**
+ * Displays a dialog for token verification. The dialog includes a text field for the user to enter a token, a countdown timer, and a button to verify the token.
+ *
+ * @param onDismiss A callback function that gets called when the dialog is dismissed.
+ * @param onTokenVerified A callback function that gets called when the entered token matches the expected token.
+ *
+ * @return Unit This function does not return a value. It displays a dialog and calls the appropriate callback function based on the user's actions.
+ * @OptIn(ExperimentalMaterial3Api::class) This annotation indicates that this function uses APIs that are marked as experimental in the Material 3 library.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TokenVerificationDialog(onDismiss: () -> Unit, onTokenVerified: () -> Unit) {
+    val context = LocalContext.current
+    var enteredToken by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Verify Token") },
+        text = {
+            Column {
+                Text("Please enter the code sent to your email:")
+                TextField(
+                    value = enteredToken,
+                    onValueChange = { enteredToken = it },
+                    label = { Text("Code") }
+                )
+                CommonFun.StartCountdown(onCountdownOver = onDismiss)
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (enteredToken == AppVariables.resetToken.value) {
+                        onTokenVerified()
+                        onDismiss()
+                    } else {
+                        // Display an error message
+                        Toast.makeText(context, "Invalid code", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                colors = CommonFun.CustomButtonColors()
+            ) {
+                Text("Verify Code")
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = onDismiss,
+                colors = CommonFun.CustomButtonColors()
+                ) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+/**
+ * This function validates the password during user registration.
+ *
+ * It checks the following conditions:
+ * 1. The email address field should not be empty.
+ * 2. The email address should be valid.
+ * 3. The first password field should meet the password requirements.
+ * 4. The second password field should meet the password requirements.
+ * 5. The first and second password fields should match.
+ *
+ * If any of these conditions are not met, it shows a Toast message with the appropriate error message and returns false.
+ * If all conditions are met, it returns true.
+ *
+ * @param context The context
+ **/
+fun validatePassword(context: Context): Boolean {
+    when {
+        AppVariables.password1.value.isValidatePassword().isNotEmpty() -> {
+            Toast.makeText(context, AppVariables.password1.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
+            return false
+        }
+        AppVariables.password2.value.isValidatePassword().isNotEmpty() -> {
+            Toast.makeText(context, AppVariables.password2.value.isValidatePassword(), Toast.LENGTH_SHORT).show()
+            return false
+        }
+        AppVariables.password1.value != AppVariables.password2.value -> {
+            Toast.makeText(context, Constants.ERR_NOT_MATCH, Toast.LENGTH_SHORT).show()
+            return false
+        }
+    }
+    return true
+}
