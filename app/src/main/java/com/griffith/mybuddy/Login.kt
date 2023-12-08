@@ -773,7 +773,7 @@ fun TokenVerificationDialog(onDismiss: () -> Unit, onTokenVerified: () -> Unit) 
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Verify Token") },
+        title = { Text("Verify Code") },
         text = {
             Column {
                 Text("Please enter the code sent to your email:")
