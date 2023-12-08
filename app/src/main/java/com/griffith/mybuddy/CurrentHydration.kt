@@ -141,7 +141,7 @@ class CurrentHydration : ComponentActivity() {
             //Reset hydration leve back to 0 every midnight
             LaunchedEffect(key1 = AppVariables.hydrationLevel) {
                 while (true) {
-                    delay(getTimeUntilMidnight())
+                    delay(CommonFun.getTimeUntilMidnight())
                     AppVariables.hydrationLevel = 0
                 }
             }
@@ -285,22 +285,6 @@ fun LocationUpdates(onLocationChanged: (Location) -> Unit) {
     }
 }
 
-/**
- * Calculates the time until midnight in milliseconds.
- * This function creates a Calendar instance representing the next midnight and subtracts the current time from it to get the time until midnight.
- * @return The time until midnight in milliseconds.
- */
-fun getTimeUntilMidnight(): Long {
-    val calendar = Calendar.getInstance().apply {
-        add(Calendar.DAY_OF_YEAR, 1)
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-    val currentTime = Calendar.getInstance().timeInMillis
-    return calendar.timeInMillis - currentTime
-}
 
 /**
  * This function is responsible for fetching weather data and sending notifications to the user.
@@ -488,7 +472,7 @@ fun CustomAmountDialog(context: Context) {
                             ).show()
                         }
                     },
-                    colors = CommonFun.CustomButtonColors()
+                    colors = CommonFun.customButtonColors()
                 ) {
                     Text(text = "Confirm", color = Color.Black)
                 }
@@ -496,7 +480,7 @@ fun CustomAmountDialog(context: Context) {
             dismissButton = {
                 Button(
                     onClick = { AppVariables.showDialog = false },
-                    colors = CommonFun.CustomButtonColors()
+                    colors = CommonFun.customButtonColors()
                 ) {
                     Text(text = "Cancel", color = Color.Black)
                 }

@@ -194,10 +194,7 @@ fun SetupUI(navController: NavController) {
                 )
                 Button(
                     onClick = { navController.navigate("register") },
-                    colors = ButtonDefaults.buttonColors(
-                        Color.Transparent,
-                        contentColor = Color.Black
-                    )
+                    colors = CommonFun.transparentButtonColors()
                 ) {
                     Text("Sing in to continue")
                 }
@@ -218,7 +215,7 @@ fun SetupUI(navController: NavController) {
                             Toast.makeText(context, "Invalid email or password", Toast.LENGTH_SHORT).show()
                         }
                     },
-                    colors = CommonFun.CustomButtonColors(),
+                    colors = CommonFun.customButtonColors(),
                     modifier = Modifier
                         .height(50.dp)
                         .width(200.dp)
@@ -250,10 +247,7 @@ fun SetupUI(navController: NavController) {
                 ) {
                     Button(
                         onClick = { navController.navigate("register") },
-                        colors = ButtonDefaults.buttonColors(
-                            Color.Transparent,
-                            contentColor = Color.Black
-                        )
+                        colors = CommonFun.transparentButtonColors()
                     ) {
                         Text("Sing in to continue")
                     }
@@ -273,7 +267,7 @@ fun SetupUI(navController: NavController) {
                                 Toast.makeText(context, "Invalid email or password", Toast.LENGTH_SHORT).show()
                             }
                         },
-                        colors = CommonFun.CustomButtonColors()
+                        colors = CommonFun.customButtonColors()
                     ) {
                         Text("Login")
                     }
@@ -309,10 +303,7 @@ fun RegistrationScreen(navController: NavController) {
     CommonFun.LogoColumn {
         Button(
             onClick = { navController.popBackStack() },
-            colors = ButtonDefaults.buttonColors(
-                Color.Transparent,
-                contentColor = Color.Black
-            )
+            colors = CommonFun.transparentButtonColors()
         ) {
             Text(text= "Back to Login", fontSize = 20.sp)
         }
@@ -338,7 +329,7 @@ fun RegistrationScreen(navController: NavController) {
                     context.startActivity(intent)
                 }
             },
-           colors = CommonFun.CustomButtonColors(),
+           colors = CommonFun.customButtonColors(),
             modifier = Modifier
                 .height(50.dp)
                 .width(200.dp)
@@ -675,7 +666,7 @@ fun ForgotPasswordPopup(onDismiss: () -> Unit, onSendEmail: (String) -> Unit) {
                         Toast.makeText(context, "Email not found", Toast.LENGTH_SHORT).show()
                     }
                 },
-                colors = CommonFun.CustomButtonColors()
+                colors = CommonFun.customButtonColors()
             ) {
                 Text("Send Email")
             }
@@ -683,7 +674,7 @@ fun ForgotPasswordPopup(onDismiss: () -> Unit, onSendEmail: (String) -> Unit) {
         dismissButton = {
             Button(
                 onClick = onDismiss,
-                colors = CommonFun.CustomButtonColors()
+                colors = CommonFun.customButtonColors()
             ) {
                 Text("Cancel")
             }
@@ -702,10 +693,7 @@ fun ForgotPasswordButton(navController: NavController) {
 
     Button(
         onClick = { AppVariables.isForgotPasswordPopupVisible = true },
-        colors = ButtonDefaults.buttonColors(
-            Color.Transparent,
-            contentColor = Color.Black
-        )
+        colors = CommonFun.transparentButtonColors()
     ) {
         Text("Forgot Password")
     }
@@ -730,6 +718,15 @@ fun ForgotPasswordButton(navController: NavController) {
     }
 }
 
+/**
+ * A composable function that displays a screen for resetting the password.
+ * This screen includes two password fields and an "Update Password" button.
+ * When the button is clicked, it validates the entered passwords, updates the password in the database,
+ * and navigates back to the login screen.
+ *
+ * @param navController The NavController used for navigation.
+ * @requires The minimum API level required is O (API 26).
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ResetPasswordScreen(navController: NavController) {
@@ -752,7 +749,7 @@ fun ResetPasswordScreen(navController: NavController) {
                    navController.navigate("login")
                 }
             },
-            colors = CommonFun.CustomButtonColors()
+            colors = CommonFun.customButtonColors()
         ) {
             Text("Update Password")
         }
@@ -799,7 +796,7 @@ fun TokenVerificationDialog(onDismiss: () -> Unit, onTokenVerified: () -> Unit) 
                         Toast.makeText(context, "Invalid code", Toast.LENGTH_SHORT).show()
                     }
                 },
-                colors = CommonFun.CustomButtonColors()
+                colors = CommonFun.customButtonColors()
             ) {
                 Text("Verify Code")
             }
@@ -807,7 +804,7 @@ fun TokenVerificationDialog(onDismiss: () -> Unit, onTokenVerified: () -> Unit) 
         dismissButton = {
             Button(
                 onClick = onDismiss,
-                colors = CommonFun.CustomButtonColors()
+                colors = CommonFun.customButtonColors()
                 ) {
                 Text("Cancel")
             }

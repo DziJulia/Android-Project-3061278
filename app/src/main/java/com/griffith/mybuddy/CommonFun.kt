@@ -17,12 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -31,6 +31,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 /**
  * The `CommonFun` object encapsulates all common functions used across the application.
@@ -123,10 +124,40 @@ object CommonFun {
      * and the content color set to black.
      */
     @Composable
-    fun CustomButtonColors(): ButtonColors {
+    fun customButtonColors(): ButtonColors {
         return ButtonDefaults.buttonColors(
             colorResource(id = R.color.deepSkyBlueColor),
             contentColor = colorResource(id = R.color.black)
         )
+    }
+
+    /**
+     * This is a `@Composable` function that defines custom colors for a button in Jetpack Compose.
+     * @return ButtonColors object with the background color set to `transparent` (defined in your color resources)
+     * and the content color set to black.
+     */
+    @Composable
+    fun transparentButtonColors(): ButtonColors {
+        return ButtonDefaults.buttonColors(
+            Color.Transparent,
+            contentColor = Color.Black
+        )
+    }
+
+    /**
+     * Calculates the time until midnight in milliseconds.
+     * This function creates a Calendar instance representing the next midnight and subtracts the current time from it to get the time until midnight.
+     * @return The time until midnight in milliseconds.
+     */
+    fun getTimeUntilMidnight(): Long {
+        val calendar = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val currentTime = Calendar.getInstance().timeInMillis
+        return calendar.timeInMillis - currentTime
     }
 }

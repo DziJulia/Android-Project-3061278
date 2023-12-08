@@ -423,7 +423,7 @@ fun ShowNumberInputDialog(label: String, value: MutableState<String>, openDialog
                 onClick = {
                     openDialog.value = false
                 },
-                colors = CommonFun.CustomButtonColors()
+                colors = CommonFun.customButtonColors()
             ) {
                 Text(text = "Confirm", color = Color.Black)
             }
@@ -458,7 +458,7 @@ fun ShowTextInputDialog(label: String, value: MutableState<String>, openDialog: 
                 onClick = {
                     openDialog.value = false
                 },
-                colors = CommonFun.CustomButtonColors()
+                colors = CommonFun.customButtonColors()
             ) {
                 Text(text = "Confirm")
             }
@@ -503,7 +503,7 @@ fun SelectionPopup(label: String, value: MutableState<String>, options: List<Str
             Button(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.End).padding(16.dp),
-                colors = CommonFun.CustomButtonColors()
+                colors = CommonFun.customButtonColors()
             ) {
                 Text("Confirm")
             }

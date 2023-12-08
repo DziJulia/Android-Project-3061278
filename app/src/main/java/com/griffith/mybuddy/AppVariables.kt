@@ -64,7 +64,7 @@ object AppVariables {
      * `hydrationLevel` is a mutable state that holds the current hydration level.
      * It's an integer that increases based on the amount of water intake.
      * This state is observed by Jetpack Compose and any changes to this state
-     * will recompose all composables that read this state.
+     * will recompose all composable that read this state.
      */
     var hydrationLevel by mutableIntStateOf(0)
 
@@ -72,7 +72,7 @@ object AppVariables {
      * `hydrationLevelData` is a mutable state that holds the hydrationLevelData.
      * It's an integer that increases based on the amount of water intake.
      * This state is observed by Jetpack Compose and any changes to this state
-     * will recompose all composables that read this state.
+     * will recompose all composable that read this state.
      */
     var hydrationLevelData by mutableIntStateOf(0)
 
@@ -80,7 +80,7 @@ object AppVariables {
      * `hydrationGoalData` is a mutable state that holds the hydrationGoalData.
      * It's an integer that increases based on the amount of water intake.
      * This state is observed by Jetpack Compose and any changes to this state
-     * will recompose all composables that read this state.
+     * will recompose all composable that read this state.
      */
     var hydrationGoalData by mutableIntStateOf(0)
 
@@ -88,7 +88,7 @@ object AppVariables {
      * `showDialog` is a mutable state that controls the visibility of the dialog.
      * When `showDialog` is true, the dialog is visible. When `showDialog` is false,
      * the dialog is dismissed. This state is observed by Jetpack Compose and any changes
-     * to this state will recompose all composables that read this state.
+     * to this state will recompose all composable that read this state.
      */
     var showDialog by mutableStateOf(false)
 
@@ -102,7 +102,7 @@ object AppVariables {
      * `isForgotPasswordPopupVisible` is a mutable state that controls the visibility of the dialog.
      * When `isForgotPasswordPopupVisible` is true, the dialog is visible. When `isForgotPasswordPopupVisible` is false,
      * the dialog is dismissed. This state is observed by Jetpack Compose and any changes
-     * to this state will recompose all composables that read this state.
+     * to this state will recompose all composable that read this state.
      */
     var isForgotPasswordPopupVisible by mutableStateOf(false)
 
