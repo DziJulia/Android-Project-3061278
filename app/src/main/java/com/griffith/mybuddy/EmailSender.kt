@@ -41,7 +41,7 @@ class EmailSender {
 
             try {
                 val message = MimeMessage(session)
-                message.setFrom(InternetAddress("no-reply@drinkup.com"))
+                message.setFrom(InternetAddress(Constants.EMAIL))
                 message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to))
                 message.subject = "Reset Password"
                 AppVariables.resetToken.value = generateResetToken()

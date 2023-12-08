@@ -710,7 +710,7 @@ fun ForgotPasswordButton(navController: NavController) {
 
     if (tokenVerified) {
         TokenVerificationDialog(
-            onDismiss = { /* Handle dismiss */ },
+            onDismiss = { tokenVerified = false },
             onTokenVerified = {
                 navController.navigate("resetPassword")
             },
