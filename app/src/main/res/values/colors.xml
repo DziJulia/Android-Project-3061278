@@ -12,4 +12,5 @@
     <color name="buttonBackgroundColor">#C0DBEC</color>
     <color name="borderColor">#FF000000</color>
     <color name="textColor">#FF000000</color>
+    <color name="veryDarkBlue">#02023E</color>
 </resources>

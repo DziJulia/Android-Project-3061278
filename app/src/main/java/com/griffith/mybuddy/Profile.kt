@@ -396,6 +396,9 @@ fun ShowNumberInputDialog(label: String, value: MutableState<String>, openDialog
     val focusManager = LocalFocusManager.current
 
     AlertDialog(
+        containerColor = CommonFun.alertDialogParameters()["containerColor"] as Color,
+        titleContentColor = CommonFun.alertDialogParameters()["titleContentColor"] as Color,
+        modifier = CommonFun.alertDialogParameters()["modifier"] as Modifier,
         onDismissRequest = {
             openDialog.value = false
         },
@@ -441,6 +444,9 @@ fun ShowNumberInputDialog(label: String, value: MutableState<String>, openDialog
 @Composable
 fun ShowTextInputDialog(label: String, value: MutableState<String>, openDialog: MutableState<Boolean>) {
     AlertDialog(
+        containerColor = CommonFun.alertDialogParameters()["containerColor"] as Color,
+        titleContentColor = CommonFun.alertDialogParameters()["titleContentColor"] as Color,
+        modifier = CommonFun.alertDialogParameters()["modifier"] as Modifier,
         onDismissRequest = {
             openDialog.value = false
         },
@@ -480,7 +486,11 @@ fun SelectionPopup(label: String, value: MutableState<String>, options: List<Str
             .border(2.dp, Color(192, 226, 236))
             .background(Color(232, 244, 248))
         ) {
-            Text(text = label, modifier = Modifier.padding(16.dp))
+            Text(
+                text = label,
+                color = CommonFun.alertDialogParameters()["titleContentColor"] as Color,
+                modifier = Modifier.padding(16.dp)
+            )
             options.forEach { option ->
                 Row(Modifier
                     .fillMaxWidth()

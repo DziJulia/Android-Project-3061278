@@ -5,6 +5,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -159,5 +160,27 @@ object CommonFun {
         }
         val currentTime = Calendar.getInstance().timeInMillis
         return calendar.timeInMillis - currentTime
+    }
+
+    /**
+     * This is a composable function that returns a map of parameters for an AlertDialog.
+     *
+     * @param containerColor The color of the container. Default is the color resource 'activityBackground'.
+     * @param titleContentColor The color of the title content. Default is the color resource 'veryDarkBlue'.
+     * @param modifier The modifier for the AlertDialog. Default is a background with the color resource 'activityBackground'.
+     *
+     * @return A map containing the parameters for the AlertDialog.
+     */
+    @Composable
+    fun alertDialogParameters(
+        containerColor: Color = colorResource(id = R.color.activityBackground),
+        titleContentColor: Color = colorResource(id = R.color.veryDarkBlue),
+        modifier: Modifier = Modifier.background(color = colorResource(id = R.color.activityBackground))
+    ): Map<String, Any> {
+        return mapOf(
+            "containerColor" to containerColor,
+            "titleContentColor" to titleContentColor,
+            "modifier" to modifier
+        )
     }
 }

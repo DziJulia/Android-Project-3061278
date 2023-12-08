@@ -484,7 +484,10 @@ fun CustomAmountDialog(context: Context) {
                 ) {
                     Text(text = "Cancel", color = Color.Black)
                 }
-            }
+            },
+            containerColor = CommonFun.alertDialogParameters()["containerColor"] as Color,
+            titleContentColor = CommonFun.alertDialogParameters()["titleContentColor"] as Color,
+            modifier = CommonFun.alertDialogParameters()["modifier"] as Modifier
         )
     }
 }

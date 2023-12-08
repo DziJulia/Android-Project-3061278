@@ -497,7 +497,10 @@ fun LogOutButton(modifier: Modifier = Modifier) {
             title = { Text(text = "Log Out") },
             text = { Text(text = "You have been successfully logged out!") },
             confirmButton = { Row { } },
-            properties = DialogProperties(dismissOnClickOutside = false)
+            properties = DialogProperties(dismissOnClickOutside = false),
+            containerColor = CommonFun.alertDialogParameters()["containerColor"] as Color,
+            titleContentColor = CommonFun.alertDialogParameters()["titleContentColor"] as Color,
+            modifier = CommonFun.alertDialogParameters()["modifier"] as Modifier
         )
 
         LaunchedEffect(showDialog.value) {
@@ -644,6 +647,9 @@ fun ForgotPasswordPopup(onDismiss: () -> Unit, onSendEmail: (String) -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = CommonFun.alertDialogParameters()["containerColor"] as Color,
+        titleContentColor = CommonFun.alertDialogParameters()["titleContentColor"] as Color,
+        modifier = CommonFun.alertDialogParameters()["modifier"] as Modifier,
         title = { Text("Forgot Password") },
         text = {
             Column {
@@ -773,6 +779,9 @@ fun TokenVerificationDialog(onDismiss: () -> Unit, onTokenVerified: () -> Unit) 
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = CommonFun.alertDialogParameters()["containerColor"] as Color,
+        titleContentColor = CommonFun.alertDialogParameters()["titleContentColor"] as Color,
+        modifier = CommonFun.alertDialogParameters()["modifier"] as Modifier,
         title = { Text("Verify Code") },
         text = {
             Column {
