@@ -45,8 +45,9 @@ class EmailSender {
                 message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to))
                 message.subject = "Reset Password"
                 AppVariables.resetToken.value = generateResetToken()
+                val name = AppVariables.name.value.ifEmpty { "User" }
                 message.setText("""
-                    Dear User,
+                    Dear $name,
 
                     We received a request to reset your password. If you didn't make this request, just ignore this email. Otherwise, you can reset your password using this code:
 

@@ -14,7 +14,9 @@ import kotlinx.coroutines.withContext
 import java.security.SecureRandom
 import java.util.Base64
 import java.security.MessageDigest
+import java.time.LocalDate
 import java.time.Year
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Random
 
@@ -269,92 +271,88 @@ class DatabaseManager(
     ): List<Triple<Int, Int, Int>> {
         val userId = getUserIdByEmail(readableDatabase, email)
         var startDate = date
-        var endDate = date
-        val month = date.substring(5, 7).toInt()
-        Log.d("DATABASE", "start: $date")
-        Log.d("DATABASE", "month: $month")
+        Log.d("DATABASE", "  startDate: $startDate")
+        val cal = Calendar.getInstance()
+        cal.time = AppVariables.sdf.parse(date)!!
+
+        val data = mutableListOf<Triple<Int, Int, Int>>()
 
         when (period) {
             "week" -> {
-                val cal = Calendar.getInstance()
-                cal.time = AppVariables.sdf.parse(date)!!
                 cal.firstDayOfWeek = Calendar.MONDAY
                 cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
-                startDate = AppVariables.sdf.format(cal.time)
-                cal.add(Calendar.DATE, 6)
-                endDate = AppVariables.sdf.format(cal.time)
+                for (i in 0..6) {
+                    val newDate = AppVariables.sdf.format(cal.time)
+                    Log.d("DATABASE", "  newDate: $newDate")
+                    fetchAndAddData(userId!!, newDate, cal.get(Calendar.DAY_OF_MONTH), data)
+                    cal.add(Calendar.DATE, 1)
+                }
             }
-
             "month" -> {
-                // Assuming the date format is "yyyy-MM-dd"
                 startDate = date.substring(0, 8) + "01"
-                val cal = Calendar.getInstance()
                 cal.time = AppVariables.sdf.parse(startDate)!!
-                cal.add(Calendar.MONTH, 1)
-                cal.add(Calendar.DATE, -1)
-                endDate = AppVariables.sdf.format(cal.time)
+                val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+                for (i in 0 until daysInMonth) {
+                    cal.set(Calendar.DAY_OF_MONTH, i + 1)
+                    val newDate = AppVariables.sdf.format(cal.time)
+                    fetchAndAddData(userId!!, newDate, cal.get(Calendar.MONTH) + 1, data)
+                }
             }
-
             "year" -> {
-                startDate = date.substring(0, 5) + "01-01"
-                endDate = date.substring(0, 5) + "12-31"
+                for (i in 1..12) {
+                    cal.set(Calendar.YEAR, date.substring(0, 4).toInt())
+                    cal.set(Calendar.MONTH, i - 1)
+                    cal.set(Calendar.DAY_OF_MONTH, 1)
+                    startDate = AppVariables.sdf.format(cal.time)
+                    cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
+                    fetchAndAddData(userId!!, startDate, i, data)
+                }
+            }
+            else -> {
+                fetchAndAddData(userId!!, startDate, date.substring(5, 7).toInt(), data)
             }
         }
 
-        val data = mutableListOf<Triple<Int, Int, Int>>()
-        Log.d("DATABASE", "data: $data")
+        Log.d("DATABASE", " DATABASE: $data")
 
-        if (period == "year") {
-            val cal = Calendar.getInstance()
-            for (i in 1..12) {
-                cal.set(Calendar.YEAR, date.substring(0, 4).toInt())
-                cal.set(Calendar.MONTH, i - 1)
-                cal.set(Calendar.DAY_OF_MONTH, 1)
-                startDate = AppVariables.sdf.format(cal.time)
-                cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
-                endDate = AppVariables.sdf.format(cal.time)
-                fetchAndAddData(userId!!, startDate, endDate, i, data)
-            }
-        } else {
-            fetchAndAddData(userId!!, startDate, endDate, month, data)
-        }
-
-        Log.d("DATABASE", "data: $data")
         return data
     }
 
     /**
-     * This function fetches hydration data for a given user and date range, and adds it to a provided list.
+     * This function fetches hydration data for a given user and date, and adds it to a provided list.
      * @param userId The ID of the user for whom the data is being fetched.
-     * @param startDate The start date of the period for which the data is being fetched.
-     * @param endDate The end date of the period for which the data is being fetched.
-     * @param month The month for which the data is being fetched. This is used when adding data to the list.
-     * @param data The list to which the fetched data is added. Each element in the list is a Triple containing the hydration goal, the value for the day, and the month.
+     * @param date The date for which the data is being fetched.
+     * @param timeUnitValue The time unit value (could be day or month) for which the data is being fetched. This is used when adding data to the list.
+     * @param data The list to which the fetched data is added. Each element in the list is a Triple containing the hydration goal, the value for the day, and the time unit value.
      */
     private fun fetchAndAddData(
         userId: Int,
-        startDate: String,
-        endDate: String,
-        month: Int,
+        date: String,
+        timeUnitValue: Int,
         data: MutableList<Triple<Int, Int, Int>>
     ) {
         val cursor = readableDatabase.query(
             "HydrationForDay",
             arrayOf("goal", "value_of_day"),
-            "user_id=? AND date BETWEEN ? AND ?",
-            arrayOf(userId.toString(), startDate, endDate),
+            "user_id=? AND date=?",
+            arrayOf(userId.toString(), date),
             null,
             null,
             null
         )
 
         cursor.use {
-            while (it.moveToNext()) {
-                val goalIndex = it.getColumnIndex("goal")
-                val valueIndex = it.getColumnIndex("value_of_day")
-                val goal = if (goalIndex != -1) it.getInt(goalIndex) else 0
-                val value = if (valueIndex != -1) it.getInt(valueIndex) else 0
-                data.add(Triple(goal, value, month))
+            if (it.count == 0) {
+                // If no data is found, add a Triple with 0 values
+                data.add(Triple(0, 0, timeUnitValue))
+            } else {
+                while (it.moveToNext()) {
+                    val goalIndex = it.getColumnIndex("goal")
+                    val valueIndex = it.getColumnIndex("value_of_day")
+                    val goal = if (goalIndex != -1) it.getInt(goalIndex) else 0
+                    val value = if (valueIndex != -1) it.getInt(valueIndex) else 0
+                    data.add(Triple(goal, value, timeUnitValue))
+                }
             }
         }
     }
@@ -637,7 +635,7 @@ class DatabaseManager(
     @RequiresApi(Build.VERSION_CODES.O)
     private suspend fun insertTestUsers(db: SQLiteDatabase?) = withContext(Dispatchers.IO) {
         val salt = generateSalt()
-        val hashedPassword = hashPassword("testPassword", salt)
+        val hashedPassword = hashPassword("test", salt)
 
         db?.execSQL("INSERT INTO users (email, hashed_password, salt, created_at) VALUES ('test', '$hashedPassword', '$salt', '2022-01-01')")
     }
@@ -654,6 +652,7 @@ class DatabaseManager(
      *
      * The hydration data is generated as follows:
      * - For each day of each month of the current year and the previous year, a random hydration value between 1000 and 4000 is generated.
+     * - A random day in each month is left empty.
      * - This hydration value, along with the date and a fixed goal of 3000, is inserted into the HydrationForDay table for the test user.
      *
      * Note: This function is marked with the @RequiresApi annotation to indicate that it requires the API level specified (in this case, Build.VERSION_CODES.O) or higher.
@@ -662,23 +661,41 @@ class DatabaseManager(
     private suspend fun insertTestData(db: SQLiteDatabase?) = withContext(Dispatchers.IO) {
         // Insert test user profiles
         Log.d("DATABASE", "Getting DemoDATA")
-        db?.execSQL("INSERT INTO UserProfile (user_id, name, gender, activity_level, height, weight) VALUES (1, 'John Doe', 'Male', 'Active', 1.75, 70)")
+        db?.execSQL("INSERT INTO UserProfile (user_id, name, gender, activity_level, height, weight) VALUES (1, 'John Doe', 'Male', 'Active', 175, 70)")
         Log.d("DATABASE", "Getting DemoDATA")
         // Insert hydration data for different dates within this year and the previous year
         val random = Random()
         val currentYear = Year.now().value
         val previousYear = currentYear - 1
+        val today = LocalDate.now()
+
+        // Pick a random month to leave empty
+        val emptyMonth = random.nextInt(12) + 1
 
         for (year in listOf(previousYear, currentYear)) {
             for (month in 1..12) {
-                // Use 28 to ensure we cover all months
-                for (day in 1..28) {
-                    val date = String.format("%04d-%02d-%02d", year, month, day)
-                    val valueOfDay =
-                        random.nextInt(3000) + 1000  // Random hydration value between 1000 and 4000
+                // Skip the randomly chosen month
+                if (month == emptyMonth) {
+                    continue
+                }
+                val date = LocalDate.of(year, month, 1)
+                // Use date.lengthOfMonth() to ensure we cover all days in the month
+                for (day in 1..date.lengthOfMonth()) {
+                    // Pick a random day to leave empty
+                    val emptyDay = random.nextInt(date.lengthOfMonth()) + 1
+                    if (day == emptyDay) {
+                        continue
+                    }
+                    val dateWithDay = LocalDate.of(year, month, day)
+                    if (dateWithDay.isAfter(today)) {
+                        // Skip this date if it's in the future
+                        continue
+                    }
+                    val dateString = dateWithDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    val valueOfDay = random.nextInt(3000) + 1000  // Random hydration value between 1000 and 4000
                     val goal = 3000
 
-                    db?.execSQL("INSERT INTO HydrationForDay (date, user_id, value_of_day, goal) VALUES ('$date', 1, $valueOfDay, $goal)")
+                    db?.execSQL("INSERT INTO HydrationForDay (date, user_id, value_of_day, goal) VALUES ('$dateString', 1, $valueOfDay, $goal)")
                 }
             }
         }

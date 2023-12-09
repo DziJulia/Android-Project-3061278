@@ -14,6 +14,8 @@ object Constants {
     const val EMAIL = "drinkupapp123@gmail.com"
 
     val MONTHS = listOf("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D")
+    val DAYS = listOf("M", "T", "W", "T", "F", "S", "S")
+    val DAYS_FOR_MONTH = listOf("1", "5", "15", "22", "28")
 
     //PROFILE CONSTANTS
     const val MAX_TEMPERATURE = 25
