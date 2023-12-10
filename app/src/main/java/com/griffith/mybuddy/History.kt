@@ -38,7 +38,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.times
 import java.lang.Float.max
 import java.text.SimpleDateFormat
 import java.util.Calendar

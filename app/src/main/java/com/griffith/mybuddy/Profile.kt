@@ -373,9 +373,9 @@ fun FormField(label: String, value: MutableState<String>, onValueChange: (String
  * @return The recommended water intake in milliliters.
  */
 fun calculateRecommendedWaterIntake(activityLevel: Float, altitude: Double): String {
-    val gender = AppVariables.gender.value?.lowercase()
-    val weight = AppVariables.weight.value?.toFloatOrNull() ?: 0f
-    val height = AppVariables.height.value?.toFloatOrNull() ?: 0f
+    val gender = AppVariables.gender.value.lowercase()
+    val weight = AppVariables.weight.value.toFloatOrNull() ?: 0f
+    val height = AppVariables.height.value.toFloatOrNull() ?: 0f
 
     val genderFactor = if (gender == "female") 0.8f else 0.85f
     val adjustmentFactor = 1.0 + (altitude / 10000.0)

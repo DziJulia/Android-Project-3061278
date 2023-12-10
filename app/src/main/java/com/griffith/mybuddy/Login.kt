@@ -213,7 +213,7 @@ fun SetupUI(navController: NavController) {
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
                 Button(
                     onClick = {
-                        if (AppVariables.emailAddress.value.isNullOrEmpty() || password.value.isNullOrEmpty()) {
+                        if (AppVariables.emailAddress.value.isEmpty() || password.value.isEmpty()) {
                             // Either email or password is empty, show an error message
                             Toast.makeText(context, "Please enter both email and password", Toast.LENGTH_SHORT).show()
                         } else if (databaseManager.verifyLogin(AppVariables.emailAddress.value, password.value)) {
