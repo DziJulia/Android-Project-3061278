@@ -514,6 +514,7 @@ fun LogOutButton(modifier: Modifier = Modifier) {
             delay(2000)
             showDialog.value = false
             AppVariables.emailAddress = mutableStateOf("")
+            AppVariables.selectedButtonMenu = "C"
             Log.d("EMAIL", "hydrationLevelApp: ${AppVariables.emailAddress}")
             val intent = Intent(context, Login::class.java)
             context.startActivity(intent)
