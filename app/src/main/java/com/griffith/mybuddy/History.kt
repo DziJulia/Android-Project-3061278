@@ -350,7 +350,7 @@ private fun DisplayWaterIntakeForDay() {
 
     BoxWithConstraints(
         modifier = Modifier
-            .height(240.dp)
+            .height(280.dp)
             .fillMaxWidth()
     ) {
         val height = constraints.maxHeight.toFloat() / 2
@@ -363,10 +363,10 @@ private fun DisplayWaterIntakeForDay() {
                 return@LaunchedEffect
             }
 
-            heightRatio.floatValue = (AppVariables.hydrationLevelData / AppVariables.hydrationGoalData.toFloat()) * height
+            heightRatio.floatValue = (AppVariables.hydrationLevelData / AppVariables.hydrationGoalData.toFloat() * height)
             half.intValue = heightRatio.floatValue.toInt() / 2
         }
-
+        Log.d("HEIGHT OF LINE", "  lineHeight: ${heightRatio.floatValue}")
         // Hydration level
         Box(
             modifier = Modifier
@@ -378,7 +378,7 @@ private fun DisplayWaterIntakeForDay() {
 
         // Hydration goal
         for (i in heightRatio.floatValue.toInt() downTo 1) {
-            val lineHeight = if (i == half.intValue) (height/2)-20 else height
+            val lineHeight = if (i == half.intValue) ((height-140)/2) else (height-105)
             Log.d("HEIGHT OF LINE", "  lineHeight: $lineHeight")
             Box(
                 modifier = Modifier

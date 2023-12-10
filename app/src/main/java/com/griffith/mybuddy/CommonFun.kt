@@ -58,7 +58,8 @@ object CommonFun {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     fun updateHydrationData(databaseManager: DatabaseManager) {
-        val goalHydration = AppVariables.hydrationGoal.value.toIntOrNull() ?: 0
+        val goalHydrationString = AppVariables.hydrationGoal.value.takeIf { it.isNotBlank() } ?: "0"
+        val goalHydration = goalHydrationString.toIntOrNull() ?: 0
 
         CoroutineScope(Dispatchers.IO).launch {
             databaseManager.updateHydrationTable(
@@ -67,7 +68,7 @@ object CommonFun {
                 goalHydration,
                 AppVariables.hydrationLevel
             )
-            Log.d("hydrationTable", "hydrationLevelDATA: ${AppVariables.hydrationGoal.value.toInt()}")
+            Log.d("hydrationTable", "hydrationLevelDATA: $goalHydration")
         }
     }
 
