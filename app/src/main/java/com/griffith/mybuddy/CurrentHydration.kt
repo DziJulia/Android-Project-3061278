@@ -203,17 +203,12 @@ class CurrentHydration : ComponentActivity() {
         databaseManager = DatabaseManagerSingleton.getInstance(this)
         // Re-open the database connection in onResume
         database = databaseManager.writableDatabase
-
+        Log.d("EMAIL", "hydrationLevelApp: ${AppVariables.emailAddress.value}")
         val hydrationTable = databaseManager.fetchHydrationData(AppVariables.emailAddress.value, AppVariables.dateString)
-        Log.d("hydrationTable", "hydrationTable: $hydrationTable")
-        Log.d("hydrationTable", "hydrationLevelApp: ${AppVariables.hydrationLevel}")
-
         //Retrieve values for hydration levels
-        if (hydrationTable != Pair(null, null)) {
-            val (goal, value) = hydrationTable
-            AppVariables.hydrationGoal.value = goal.toString()
-            AppVariables.hydrationLevel = value ?: 0
-        }
+        val (goal, value) = hydrationTable
+        AppVariables.hydrationGoal.value = goal.toString()
+        AppVariables.hydrationLevel = value ?: 0
     }
 
     /**
@@ -542,8 +537,8 @@ fun WaterButtons() {
 fun HydrationCircle() {
     val deepSkyBlueColor = colorResource(id = R.color.deepSkyBlueColor)
     val borderColor = colorResource(id = R.color.borderColor)
-    val goalHydration = max(0, AppVariables.hydrationGoal.value.toInt())
-    val goalDecrease = AppVariables.hydrationGoal.value.toInt() - AppVariables.hydrationLevel
+    val goalHydration = max(0, AppVariables.hydrationGoal.value.toIntOrNull() ?: 0)
+    val goalDecrease = (AppVariables.hydrationGoal.value.toIntOrNull() ?: 0) - AppVariables.hydrationLevel
     val percentage = if (goalHydration.toFloat() != 0f) {
         val tempPercentage = ((AppVariables.hydrationLevel.toFloat() / goalHydration.toFloat()) * 100).toInt()
         if (tempPercentage > 100) 100 else tempPercentage

@@ -61,6 +61,7 @@ private lateinit var databaseManager: DatabaseManager
 private lateinit var database: SQLiteDatabase
 
 class Profile : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -112,12 +113,9 @@ class Profile : ComponentActivity() {
                     AppVariables.weight.value = userProfile.weight.toString()
                 }
 
-                //Retrieve values for hydration levels
-                if (hydrationTable != Pair(null, null)) {
-                    val (goal, value) = hydrationTable
-                    AppVariables.hydrationGoal.value = goal.toString()
-                    AppVariables.hydrationLevel = value ?: 0
-                }
+                val (goal, value) = hydrationTable
+                AppVariables.hydrationGoal.value = goal.toString()
+                AppVariables.hydrationLevel = value ?: 0
             }
         }
     }
@@ -132,19 +130,24 @@ class Profile : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onStop() {
         super.onStop()
-
+        Log.d("hydrationTable", "hydrationLevelDATA: ${AppVariables.hydrationGoal.value.toInt()}")
         // Update the user profile in the database
         CoroutineScope(Dispatchers.IO).launch {
             // Update the user profile in the database
-            databaseManager.upsertUserProfile(
-                AppVariables.emailAddress.value,
-                AppVariables.name.value,
-                AppVariables.gender.value,
-                AppVariables.activityLevel.value,
-                AppVariables.height.value.toFloat(),
-                AppVariables.weight.value.toFloat()
-            )
+            val userProfileJob = launch {
+                databaseManager.upsertUserProfile(
+                    AppVariables.emailAddress.value,
+                    AppVariables.name.value,
+                    AppVariables.gender.value,
+                    AppVariables.activityLevel.value,
+                    AppVariables.height.value.toFloat(),
+                    AppVariables.weight.value.toFloat()
+                )
+            }
 
+            // Wait for the user profile job to complete before updating hydration data
+            userProfileJob.join()
+            // Update hydration data
             CommonFun.updateHydrationData(databaseManager)
         }
     }
@@ -164,10 +167,13 @@ class Profile : ComponentActivity() {
 /**
  * Creates a form with fields for name, gender, weight, height, activity level, and water intake goal.
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileForm() {
     val scrollState = rememberScrollState()
-    val formBackground =  Modifier.fillMaxSize().border(width = 3.dp, color = Color.LightGray)
+    val formBackground = Modifier
+        .fillMaxSize()
+        .border(width = 3.dp, color = Color.LightGray)
 
     Column(
         modifier = Modifier
@@ -236,6 +242,7 @@ fun CreateFormFields() {
  * @param modifier Modifier for form background
  * Handles hydration goal
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HandleHydrationGoal(modifier: Modifier) {
     LocationUpdates { location ->
@@ -268,19 +275,26 @@ fun HandleHydrationGoal(modifier: Modifier) {
 /**
  * Handles hydration goal form field
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HandleHydrationGoalFormField() {
     FormField(
         label = "Water Intake Goal",
         value = AppVariables.hydrationGoal,
         onValueChange = {
-            //need to catch if input value is not nil
+            // Need to catch if input value is not nil
             try {
-                if (it.toInt() != 0) {
-                    AppVariables.hydrationGoal.value = it
+                val intValue = it.toIntOrNull()
+                if (intValue != null && intValue != 0) {
+                    Log.d("CHANGED", "value: ${AppVariables.hydrationGoal.value}")
+                    AppVariables.hydrationGoal.value = intValue.toString()
                     AppVariables.hydrationGoalManuallySet.value = true
+                    CoroutineScope(Dispatchers.IO).launch {
+                        CommonFun.updateHydrationData(databaseManager)
+                    }
                 }
             } catch (e: Exception) {
+                // Handle the exception (e.g., log or display an error message)
                 AppVariables.hydrationGoal.value = "0"
             }
         }
@@ -359,9 +373,13 @@ fun FormField(label: String, value: MutableState<String>, onValueChange: (String
  * @return The recommended water intake in milliliters.
  */
 fun calculateRecommendedWaterIntake(activityLevel: Float, altitude: Double): String {
-    val genderFactor = if (AppVariables.gender.value.lowercase() == "female") 0.8f else 0.85f
+    val gender = AppVariables.gender.value?.lowercase()
+    val weight = AppVariables.weight.value?.toFloatOrNull() ?: 0f
+    val height = AppVariables.height.value?.toFloatOrNull() ?: 0f
+
+    val genderFactor = if (gender == "female") 0.8f else 0.85f
     val adjustmentFactor = 1.0 + (altitude / 10000.0)
-    val result = (AppVariables.weight.value.toFloat()/30 + AppVariables.height.value.toFloat() / 100) * 1000 * genderFactor + activityLevel
+    val result = (weight/30 + height / 100) * 1000 * genderFactor + activityLevel
 
     // Return the rounded result directly
     return (result * adjustmentFactor).roundToInt().toString()
@@ -494,9 +512,10 @@ fun SelectionPopup(label: String, value: MutableState<String>, options: List<Str
                 modifier = Modifier.padding(16.dp)
             )
             options.forEach { option ->
-                Row(Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, top = 8.dp),
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, top = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RadioButton(
@@ -514,7 +533,9 @@ fun SelectionPopup(label: String, value: MutableState<String>, options: List<Str
             }
             Button(
                 onClick = onDismiss,
-                modifier = Modifier.align(Alignment.End).padding(16.dp),
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(16.dp),
                 colors = CommonFun.customButtonColors()
             ) {
                 Text("Confirm")

@@ -33,7 +33,6 @@
             android:name=".History"
             android:exported="false"
             android:label="@string/title_activity_history"
-            android:screenOrientation="portrait"
             android:theme="@style/Theme.MyBuddy" />
         <activity
             android:name=".Profile"

@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -109,7 +110,6 @@ class Login : ComponentActivity() {
      */
     override fun onResume() {
         super.onResume()
-        super.onResume()
         // Get the instance of databaseManager
         databaseManager = DatabaseManagerSingleton.getInstance(this)
         // Re-open the database connection in onResume
@@ -134,15 +134,25 @@ class Login : ComponentActivity() {
         //Only update on registration
         if(AppVariables.registration) {
             CoroutineScope(Dispatchers.IO).launch {
-                // Update the user profile in the database
-                databaseManager.insertUser(
-                    AppVariables.emailAddressRegistration.value,
-                    AppVariables.password1.value
-                )
-            }
+                try {
+                    val userId = databaseManager.insertUser(
+                        AppVariables.emailAddressRegistration.value,
+                        AppVariables.password1.value
+                    )
 
-            AppVariables.registration = false
+                    if (userId != -1L) {
+                        databaseManager.insertUserWithProfile(
+                            AppVariables.emailAddressRegistration.value
+                        )
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    // Log the exception or display an error message as needed
+                }
+            }
         }
+
+        AppVariables.registration = false
     }
 
     /**
@@ -203,7 +213,10 @@ fun SetupUI(navController: NavController) {
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
                 Button(
                     onClick = {
-                        if (databaseManager.verifyLogin(AppVariables.emailAddress.value, password.value)) {
+                        if (AppVariables.emailAddress.value.isNullOrEmpty() || password.value.isNullOrEmpty()) {
+                            // Either email or password is empty, show an error message
+                            Toast.makeText(context, "Please enter both email and password", Toast.LENGTH_SHORT).show()
+                        } else if (databaseManager.verifyLogin(AppVariables.emailAddress.value, password.value)) {
                             // Verification successful, proceed to CurrentHydration activity
                             val intent = Intent(context, CurrentHydration::class.java)
                             context.startActivity(intent)
@@ -324,6 +337,7 @@ fun RegistrationScreen(navController: NavController) {
                 }
                 else if (validatePassword(context)) {
                     AppVariables.registration = true
+                    AppVariables.emailAddress = AppVariables.emailAddressRegistration
                     val intent = Intent(context, CurrentHydration::class.java)
                     context.startActivity(intent)
                 }
@@ -499,6 +513,8 @@ fun LogOutButton(modifier: Modifier = Modifier) {
         LaunchedEffect(showDialog.value) {
             delay(2000)
             showDialog.value = false
+            AppVariables.emailAddress = mutableStateOf("")
+            Log.d("EMAIL", "hydrationLevelApp: ${AppVariables.emailAddress}")
             val intent = Intent(context, Login::class.java)
             context.startActivity(intent)
         }

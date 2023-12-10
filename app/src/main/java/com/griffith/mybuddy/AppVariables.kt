@@ -2,6 +2,7 @@ package com.griffith.mybuddy
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,6 +19,8 @@ import java.util.Locale
  * These variables are accessible across all activities.
  */
 object AppVariables {
+    val hydrationData: MutableState<List<Triple<Int, Int, Int>>> = mutableStateOf(emptyList())
+
     /**
      * `weight, height, hydrationGoal` is a mutable state that holds the current information of user.
      * It's an integer that increases based on the amount of water intake.
@@ -83,6 +86,8 @@ object AppVariables {
      * will recompose all composable that read this state.
      */
     var hydrationGoalData by mutableIntStateOf(0)
+    var hydrationAverageData by mutableIntStateOf(0)
+    var hydrationGoalAverageData by mutableIntStateOf(0)
 
     /**
      * `showDialog` is a mutable state that controls the visibility of the dialog.
@@ -110,7 +115,7 @@ object AppVariables {
      * This variable holds the email address.
      * It's a mutable state, so it can be observed for changes.
      */
-    val emailAddress = mutableStateOf("")
+    var emailAddress = mutableStateOf("")
 
     /**
      * This variable holds the boolean for registration
@@ -122,7 +127,7 @@ object AppVariables {
      * This variable holds the email address for registration
      * It's a mutable state, so it can be observed for changes.
      */
-    val emailAddressRegistration = mutableStateOf("")
+    var emailAddressRegistration = mutableStateOf("")
 
     /**
      * This variable holds the password for registration

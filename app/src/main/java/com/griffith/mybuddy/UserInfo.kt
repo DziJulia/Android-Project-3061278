@@ -14,5 +14,5 @@ data class UserInfo(
     val gender: String?,
     val activityLevel: String?,
     val height: Float?,
-    val weight: Float?,
+    val weight: Float?
 )

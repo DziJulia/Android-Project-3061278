@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.security.SecureRandom
 import java.util.Base64
@@ -239,9 +240,11 @@ class DatabaseManager(
      * Note: This function assumes that `getUserIdByEmail` is a valid function that returns a user ID given an email, and that the provided email corresponds to a valid user in the `Users` table of the database.
      */
     fun updateHydrationTable(email: String, date: String, goal: Int, value: Int) {
+        val userId = getUserIdByEmail(readableDatabase, email) ?: return
+
         val values = ContentValues().apply {
             put("date", date)
-            put("user_id", getUserIdByEmail(readableDatabase, email))
+            put("user_id", userId)
             put("value_of_day", value)
             put("goal", goal)
         }
@@ -253,6 +256,7 @@ class DatabaseManager(
             SQLiteDatabase.CONFLICT_REPLACE
         )
     }
+
 
     /**
      * Fetches the hydration goal and value of the day for a given user and date range.
@@ -269,7 +273,8 @@ class DatabaseManager(
         period: String,
         date: String
     ): List<Triple<Int, Int, Int>> {
-        val userId = getUserIdByEmail(readableDatabase, email)
+        val userId = getUserIdByEmail(readableDatabase, email) ?: return emptyList()
+
         var startDate = date
         Log.d("DATABASE", "  startDate: $startDate")
         val cal = Calendar.getInstance()
@@ -284,7 +289,7 @@ class DatabaseManager(
                 for (i in 0..6) {
                     val newDate = AppVariables.sdf.format(cal.time)
                     Log.d("DATABASE", "  newDate: $newDate")
-                    fetchAndAddData(userId!!, newDate, cal.get(Calendar.DAY_OF_MONTH), data)
+                    fetchAndAddData(userId, newDate, cal.get(Calendar.DAY_OF_MONTH), data)
                     cal.add(Calendar.DATE, 1)
                 }
             }
@@ -295,27 +300,64 @@ class DatabaseManager(
                 for (i in 0 until daysInMonth) {
                     cal.set(Calendar.DAY_OF_MONTH, i + 1)
                     val newDate = AppVariables.sdf.format(cal.time)
-                    fetchAndAddData(userId!!, newDate, cal.get(Calendar.MONTH) + 1, data)
+                    fetchAndAddData(userId, newDate, cal.get(Calendar.MONTH) + 1, data)
                 }
             }
             "year" -> {
-                for (i in 1..12) {
-                    cal.set(Calendar.YEAR, date.substring(0, 4).toInt())
-                    cal.set(Calendar.MONTH, i - 1)
-                    cal.set(Calendar.DAY_OF_MONTH, 1)
-                    startDate = AppVariables.sdf.format(cal.time)
-                    cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
-                    fetchAndAddData(userId!!, startDate, i, data)
+                runBlocking {
+                    fetchHydrationDataForYear(email, startDate.substring(0, 4), data)
                 }
             }
             else -> {
-                fetchAndAddData(userId!!, startDate, date.substring(5, 7).toInt(), data)
+                fetchAndAddData(userId, startDate, date.substring(5, 7).toInt(), data)
             }
         }
 
         Log.d("DATABASE", " DATABASE: $data")
 
-        return data
+        // Check if data is empty and return an empty list
+        return if (data.isEmpty()) emptyList() else data
+    }
+
+    /**
+     * Fetches hydration data for each month of a specified year for a user.
+     *
+     * @param email The email of the user.
+     * @param year The year for which to fetch the data.
+     * @return A list of triples, where each triple represents the total goal, total value of the day, and the month for each month of the year.
+     */
+    private suspend fun fetchHydrationDataForYear(
+        email: String,
+        year: String,
+        data: MutableList<Triple<Int, Int, Int>>
+    ) = withContext(Dispatchers.IO) {
+        val userId =  getUserIdByEmail(readableDatabase, email) ?: return@withContext
+
+        for (i in 1..12) {
+            val cursor = readableDatabase.rawQuery(
+                """
+            SELECT SUM(goal) as total_goal, SUM(value_of_day) as total_value
+            FROM HydrationForDay
+            WHERE user_id=? AND strftime('%Y', date)=? AND strftime('%m', date)=?
+            """, arrayOf(userId.toString(), year, i.toString().padStart(2, '0'))
+            )
+
+            cursor.use {
+                if (it.count == 0) {
+                    // If no data is found, add a Triple with 0 values
+                    data.add(Triple(0, 0, i))
+                } else {
+                    while (it.moveToNext()) {
+                        val goalIndex = it.getColumnIndex("total_goal")
+                        val valueIndex = it.getColumnIndex("total_value")
+                        val goal = if (goalIndex != -1) it.getInt(goalIndex) else 0
+                        val value = if (valueIndex != -1) it.getInt(valueIndex) else 0
+                        data.add(Triple(goal, value, i))
+                    }
+                }
+            }
+        }
+        Log.d("DATABASE THREAD", " DATABASE: $data")
     }
 
     /**
@@ -365,9 +407,10 @@ class DatabaseManager(
      * @param date The date for which the hydration data is to be fetched.
      * @return A pair of integers where the first integer is the hydration goal and the second integer is the value of the day.
      * If no matching record is found, returns a pair of null values.
+     * If no matching record is found, returns a pair of null values.
      */
     fun fetchHydrationData(email: String, date: String): Pair<Int?, Int?> {
-        val userId = getUserIdByEmail(readableDatabase, email)
+        val userId =  getUserIdByEmail(readableDatabase, email) ?: return Pair(0, 0)
         val cursor = readableDatabase.query(
             "HydrationForDay",
             arrayOf("goal", "value_of_day"),
@@ -433,6 +476,37 @@ class DatabaseManager(
         return false
     }
 
+    /**
+     * Inserts a user profile with default values for the specified user email into the "UserProfile" table.
+     *
+     * This function retrieves the user ID associated with the given email,
+     * and then inserts a user profile with default values (empty strings and 0.0 for height and weight)
+     * into the "UserProfile" table for that user ID.
+     *
+     * @param email The email of the user for whom the profile is being inserted.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun insertUserWithProfile(email: String) {
+        val userId = getUserIdByEmail(readableDatabase, email) ?: return
+
+        // Create a default UserInfo object with empty values and 0.0 for height and weight
+        val defaultUserInfo = UserInfo("", "", "", 0f, 0f)
+
+        val values = ContentValues().apply {
+            // Set default user profile values
+            put("user_id", userId)
+            put("name", defaultUserInfo.name)
+            put("gender", defaultUserInfo.gender)
+            put("activity_level", defaultUserInfo.activityLevel)
+            put("height", defaultUserInfo.height)
+            put("weight", defaultUserInfo.weight)
+        }
+
+        Log.d("DATABASE", "USER INSERTED")
+        writableDatabase.insert("UserProfile", null, values)
+    }
+
+
 
     /**
      * Retrieves user profile information from the "UserProfile" table.
@@ -443,7 +517,7 @@ class DatabaseManager(
      */
     fun getUserProfile(email: String): UserInfo? {
         val db = readableDatabase
-        val userId = getUserIdByEmail(db, email)
+        val userId = getUserIdByEmail(readableDatabase, email) ?: return UserInfo("","","",0f,0f)
         val cursor = db.query(
             "UserProfile",
             arrayOf("name", "gender", "activity_level", "height", "weight"),
@@ -454,11 +528,11 @@ class DatabaseManager(
             null
         )
 
-        var name: String? = null
-        var gender: String? = null
-        var activityLevel: String? = null
-        var height: Float? = null
-        var weight: Float? = null
+        var name: String? = ""
+        var gender: String? = ""
+        var activityLevel: String? = ""
+        var height: Float? = 0f
+        var weight: Float? = 0f
 
         cursor.use {
             if (it.moveToFirst()) {
@@ -499,7 +573,7 @@ class DatabaseManager(
         height: Float,
         weight: Float
     ) {
-        val userId = getUserIdByEmail(readableDatabase, email)
+        val userId = getUserIdByEmail(readableDatabase, email) ?: return
         val values = ContentValues().apply {
             put("name", name)
             put("gender", gender)

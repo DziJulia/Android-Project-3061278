@@ -13,4 +13,6 @@
     <color name="borderColor">#FF000000</color>
     <color name="textColor">#FF000000</color>
     <color name="veryDarkBlue">#02023E</color>
+    <color name="graphColor">#C0E2EC</color>
+    Color(192, 226, 236)
 </resources>

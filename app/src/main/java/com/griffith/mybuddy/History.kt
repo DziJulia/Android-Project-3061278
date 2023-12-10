@@ -23,7 +23,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
@@ -228,7 +231,7 @@ fun NavigationButton(selectedDate: MutableState<Date>, selectedButton: MutableSt
                 "W" -> if (direction < 0 || calendar.get(Calendar.WEEK_OF_YEAR) < Calendar.getInstance().get(Calendar.WEEK_OF_YEAR)) {
                     calendar.add(Calendar.WEEK_OF_YEAR, direction)
                 }
-                "M" -> if (direction < 0 || calendar.get(Calendar.MONTH) < Calendar.getInstance().get(Calendar.MONTH)) {
+                "M" -> if (direction < 0 || calendar.get(Calendar.YEAR) * 12 + calendar.get(Calendar.MONTH) < Calendar.getInstance().get(Calendar.YEAR) * 12 + Calendar.getInstance().get(Calendar.MONTH)) {
                     calendar.add(Calendar.MONTH, direction)
                 }
                 "Y" -> if (direction < 0 || calendar.get(Calendar.YEAR) < Calendar.getInstance().get(Calendar.YEAR)) {
@@ -255,6 +258,8 @@ fun NavigationButton(selectedDate: MutableState<Date>, selectedButton: MutableSt
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<String>) {
+    val text = if (AppVariables.period.value == "day") "Total " else "Average "
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -268,22 +273,18 @@ fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<Str
                 .fillMaxWidth()
                 .fillMaxHeight()
                 .background(Color.White)
-                .border(2.dp, Color(192, 226, 236)),
+                .border(2.dp, colorResource(id = R.color.graphColor)),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             DateNavigationRow(selectedDate, selectedButton)
             Divider(
                 modifier = Modifier.padding(horizontal = 20.dp),
-                color =  Color(192, 226, 236),
+                color =  colorResource(id = R.color.graphColor),
                 thickness = 1.dp
             )
-            if(AppVariables.period.value == "day") {
-                Text("Total ", textAlign = TextAlign.Start, style = TextStyle(fontSize = 22.sp))
-            } else {
-                Text("Average ", textAlign = TextAlign.Start)
-            }
+            Text(text, textAlign = TextAlign.Start)
             Text(
-                "${AppVariables.hydrationLevelData} ml",
+                "${AppVariables.hydrationAverageData} ml",
                 textAlign = TextAlign.Start,
                 style = TextStyle(fontSize = 25.sp),
                 color = Color.Blue
@@ -301,28 +302,36 @@ fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<Str
 @Composable
 fun WaterIntakeGraph() {
     val hydrationData = fetchHydrationData()
-    AppVariables.hydrationGoalData = hydrationData.sumOf { it.first }
-    AppVariables.hydrationLevelData = hydrationData.sumOf { it.second }
-    Log.d("DATAGOAL", "AppVariables.hydrationGoalData: ${AppVariables.hydrationGoalData}")
-    Log.d("DATAGOAL", "AppVariables.hydrationLevelData : ${AppVariables.hydrationLevelData}")
+    //Added a check to see if hydrationData has changed before recalculating the sums and averages.
+    //This way, if hydrationData hasn’t changed, you avoid doing unnecessary work.
+    if (hydrationData != AppVariables.hydrationData) {
+        AppVariables.hydrationData.value = hydrationData
+        AppVariables.hydrationGoalData = hydrationData.sumOf { it.first }
+        AppVariables.hydrationLevelData = hydrationData.sumOf { it.second }
+        AppVariables.hydrationAverageData = if (hydrationData.isNotEmpty()) AppVariables.hydrationLevelData / hydrationData.size else 0
+        AppVariables.hydrationGoalAverageData = if (hydrationData.isNotEmpty()) hydrationData.maxOf { it.first } else 0
+    }
+
     Column(modifier = Modifier
         .fillMaxWidth()
         .fillMaxHeight()) {
         Spacer(modifier = Modifier.weight(1f))
 
-        val remaining = AppVariables.hydrationLevelData.toFloat()
         when(AppVariables.period.value) {
             "week" -> {
+                GraphDivider()
                 DisplayWaterIntake(hydrationData, true)
             }
             "month" -> {
+                GraphDivider()
                 DisplayWaterIntake(hydrationData, false)
             }
             "year" -> {
+                GraphDivider()
                 DisplayYearlyWaterIntake(hydrationData)
             }
             else -> {
-                DisplayWaterIntakeForDay(remaining)
+                DisplayWaterIntakeForDay()
             }
         }
     }
@@ -330,58 +339,64 @@ fun WaterIntakeGraph() {
 
 /**
  * This function displays the water intake for a day in a graphical form.
- * @param remaining The remaining amount of water intake needed to reach the goal.
  *
  * The function calculates the current increment of water intake and displays it as a part of a Box composable.
  * The height of the Box is proportional to the ratio of the current increment to the total goal.
  * If the current increment is greater than 0, a dashed divider and a text displaying the remaining amount in milliliters are added to the Box.
  */
 @Composable
-private fun DisplayWaterIntakeForDay(remaining: Float) {
-    val totalIncrements = (AppVariables.hydrationGoalData.toFloat() / 1000).toInt()
-    val remainingIncrement = AppVariables.hydrationGoalData.toFloat() % 1000
+private fun DisplayWaterIntakeForDay() {
+    val heightRatio = remember { mutableFloatStateOf(0f) }
+    val half = remember { mutableIntStateOf(0) }
 
     BoxWithConstraints(
         modifier = Modifier
-            .height(200.dp)
+            .height(240.dp)
             .fillMaxWidth()
     ) {
-        val height = (constraints.maxHeight.toFloat() / 2)
+        val height = constraints.maxHeight.toFloat() / 2
+
+        LaunchedEffect(AppVariables.hydrationLevelData) {
+            if (AppVariables.hydrationGoalData == 0 || AppVariables.hydrationLevelData == 0) {
+                heightRatio.floatValue = 0f
+                AppVariables.hydrationAverageData = 0
+                half.intValue = 0
+                return@LaunchedEffect
+            }
+
+            heightRatio.floatValue = (AppVariables.hydrationLevelData / AppVariables.hydrationGoalData.toFloat()) * height
+            half.intValue = heightRatio.floatValue.toInt() / 2
+        }
 
         // Hydration level
         Box(
             modifier = Modifier
-                .height(((remaining / AppVariables.hydrationGoalData.toFloat()) * height).dp)
+                .height(heightRatio.floatValue.dp)
                 .fillMaxWidth()
-                .background(if (remaining > 0) colorResource(id = R.color.deepSkyBlueColor) else Color.Transparent)
+                .background(if (AppVariables.hydrationLevelData.toFloat() > 0) colorResource(id = R.color.deepSkyBlueColor) else Color.Transparent)
                 .align(Alignment.BottomStart)
         )
 
         // Hydration goal
-        for (i in totalIncrements downTo 1) {
+        for (i in heightRatio.floatValue.toInt() downTo 1) {
+            val lineHeight = if (i == half.intValue) (height/2)-20 else height
+            Log.d("HEIGHT OF LINE", "  lineHeight: $lineHeight")
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .offset(y = -((height / totalIncrements * i).dp))
+                    .offset(y = -lineHeight.dp)
             ) {
-                DashedDivider()
-                Text(
-                    "${i * 1000} ml",
-                    color = Color.DarkGray,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-        if (remainingIncrement > 0) {
-            Box(
-                modifier = Modifier.align(Alignment.BottomCenter)
-            ) {
-                DashedDivider()
-                Text(
-                    "${remainingIncrement.toInt()} ml",
-                    color = Color.DarkGray,
-                    textAlign = TextAlign.Center
-                )
+                if (i == heightRatio.floatValue.toInt() ) {
+                    DayGraphDivider()
+                } else if (i == half.intValue)
+                {
+                    DashedDivider()
+                    Text(
+                        "${AppVariables.hydrationGoalData / 2} ml",
+                        color = Color.DarkGray,
+                        modifier = Modifier.padding(start = 5.dp)
+                    )
+                }
             }
         }
     }
@@ -401,6 +416,7 @@ private fun DisplayWaterIntakeForDay(remaining: Float) {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun DisplayWaterIntake(hydrationData: List<Triple<Int, Int, Int>>, isWeekly: Boolean) {
+    val column = if (isWeekly) 25 else 10
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -412,11 +428,11 @@ private fun DisplayWaterIntake(hydrationData: List<Triple<Int, Int, Int>>, isWee
                     modifier = Modifier.fillMaxHeight(),
                     contentAlignment = Alignment.BottomCenter
                 ) {
-                    DisplayColumnWaterIntake(triple.second.toFloat(), triple.first.toFloat())
+                    DisplayColumnWaterIntake(triple.second.toFloat(), triple.first.toFloat(), column)
                     if (isWeekly) {
                         Text(Constants.DAYS[index])
-                    } else if (Constants.DAYS_FOR_MONTH.contains(index.toString())) {
-                        Text(Constants.DAYS_FOR_MONTH[index])
+                    } else if (Constants.DAYS_FOR_MONTH.contains((index + 1).toString())) {
+                        Text((index + 1).toString())
                     }
                 }
             }
@@ -443,7 +459,11 @@ private fun DisplayYearlyWaterIntake(hydrationData: List<Triple<Int, Int, Int>>)
         monthData[monthIndex] += triple.second.toFloat()
         goalDataArray[monthIndex] += triple.first.toFloat()
     }
-
+    for ((index, value) in monthData.withIndex()) {
+        Log.d("hydrationGoalAverageData", "Value at index $index : $value")
+    }
+    AppVariables.hydrationGoalAverageData = (goalDataArray.maxOrNull() ?: 0).toInt()
+    Log.d("hydrationGoalAverageData", "  hydrationGoalAverageData: $hydrationData")
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -454,7 +474,7 @@ private fun DisplayYearlyWaterIntake(hydrationData: List<Triple<Int, Int, Int>>)
                     modifier = Modifier.fillMaxHeight(),
                     contentAlignment = Alignment.BottomCenter
                 ) {
-                    DisplayColumnWaterIntake(monthData[index], goalDataArray[index])
+                    DisplayColumnWaterIntake(monthData[index], goalDataArray[index], 20)
                     Text(Constants.MONTHS[index])
                 }
             }
@@ -466,6 +486,7 @@ private fun DisplayYearlyWaterIntake(hydrationData: List<Triple<Int, Int, Int>>)
  * A composable function that displays the column for water intake.
  * @param timeUnitValue The amount of water consumed in the dat/month.
  * @param goalData The goal amount of water to be consumed in the date/month.
+ * @param boxWidth The width of each column
  *
  * The function creates a Column with the month name and a Box representing the water intake.
  * The height of the Box is proportional to the ratio of `timeUnitValue` to `goalData`.
@@ -473,16 +494,37 @@ private fun DisplayYearlyWaterIntake(hydrationData: List<Triple<Int, Int, Int>>)
  * Otherwise, the Box is transparent.
  */
 @Composable
-private fun DisplayColumnWaterIntake(timeUnitValue: Float, goalData: Float) {
+private fun DisplayColumnWaterIntake(timeUnitValue: Float, goalData: Float, boxWidth: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .height((timeUnitValue / max(1f, goalData)) * 200.dp)
-                .width(20.dp)
+                .height(calculateBoxHeight(timeUnitValue, goalData))
+                .width(boxWidth.dp)
+                .padding(bottom = 18.dp, end = 2.dp)
                 .background(if (timeUnitValue > 0) colorResource(id = R.color.deepSkyBlueColor) else Color.Transparent)
         )
     }
 }
+
+/**
+ * Calculates the height of a Box based on the given time unit value and goal data.
+ *
+ * The height is determined by the formula: (timeUnitValue / max(1f, goalData)) * 280.dp,
+ * ensuring that the division is safe by avoiding division by zero when goalData is 0.
+ * @param timeUnitValue The value representing the time unit.
+ * @param goalData The goal data used to calculate the height.
+ * @return The calculated height as a Dp (Density-independent pixels).
+ */
+@Composable
+private fun calculateBoxHeight(timeUnitValue: Float, goalData: Float): Dp {
+    // Check if goalData is 0 to avoid division by zero
+    return if (goalData != 0f) {
+        ((timeUnitValue / max(1f, goalData)) * 280).dp
+    } else {
+        0.dp
+    }
+}
+
 
 /**
  * Fetches hydration data from the database for a specific period.
@@ -504,6 +546,50 @@ private fun fetchHydrationData(): List<Triple<Int, Int, Int>> {
         AppVariables.sdf.format(AppVariables.newSelectedDate.value).toString()
     )
 }
+
+/**
+ * This function creates a divider line for Graph
+ */
+@Composable
+fun DayGraphDivider() {
+    Box(
+        modifier = Modifier.fillMaxHeight(),
+        contentAlignment = Alignment.BottomStart
+    ) {
+        Text(
+            "${AppVariables.hydrationGoalAverageData} ml",
+            color = Color.DarkGray,
+            modifier = Modifier.padding(start = 5.dp)
+        )
+
+        Divider(
+            color = colorResource(id = R.color.graphColor),
+            modifier = Modifier
+                .padding(horizontal = 10.dp),
+            thickness = 3.dp
+        )
+    }
+}
+
+/**
+ * This function creates a divider line for Graph
+ */
+@Composable
+fun GraphDivider() {
+    Text(
+        "${AppVariables.hydrationGoalAverageData} ml",
+        color = Color.DarkGray,
+        modifier = Modifier.padding(start = 5.dp)
+    )
+
+    Divider(
+        color = colorResource(id = R.color.graphColor),
+        modifier = Modifier
+            .padding(horizontal = 10.dp),
+        thickness = 3.dp
+    )
+}
+
 
 /**
  * This function creates a dashed divider line using the Canvas composable in Jetpack Compose.
