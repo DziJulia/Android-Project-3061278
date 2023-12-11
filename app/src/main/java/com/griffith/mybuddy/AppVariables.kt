@@ -175,6 +175,18 @@ object AppVariables {
      */
     val newSelectedDate = mutableStateOf(Date())
 
+    /**
+     * Resets all user-related variables to their initial states.
+     * This function is called when a user logs out, ensuring that no user data is retained after logout.
+     *
+     * Specifically, it resets the following variables:
+     * - `emailAddress`: The email address of the user. Reset to an empty string.
+     * - `selectedButtonMenu`: The selected button in the menu. Reset to "C".
+     * - `hydrationLevel`: The current hydration level of the user. Reset to 0.
+     * - `hydrationGoal`: The hydration goal of the user. Reset to "0".
+     * - `emailAddressRegistration`: The email address used for registration. Reset to an empty string.
+     * - `forgotEmailAddress`: The email address used for the forgot password function. Reset to an empty string.
+     */
     fun resetAllValues() {
         emailAddress = mutableStateOf("")
         selectedButtonMenu = "C"
