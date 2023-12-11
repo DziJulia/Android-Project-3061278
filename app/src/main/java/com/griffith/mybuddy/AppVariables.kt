@@ -194,5 +194,8 @@ object AppVariables {
         hydrationGoal.value = "0"
         emailAddressRegistration.value = ""
         forgotEmailAddress.value = ""
+        temperature.doubleValue = 0.0
     }
+
+    var temperature = mutableDoubleStateOf(0.0)
 }

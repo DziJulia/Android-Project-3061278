@@ -6,6 +6,7 @@ import android.content.Intent
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.sqlite.SQLiteDatabase
@@ -154,26 +155,34 @@ class CurrentHydration : ComponentActivity() {
                     AddSpacer(20.dp)
                     Text(
                         "Current Hydration",
-                        modifier = Modifier.align(Alignment.Start).padding(start = 10.dp),
+                        modifier = Modifier
+                            .align(Alignment.Start)
+                            .padding(start = 10.dp),
                         style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold)
                     )
                     if (CommonFun.isLandscape()) {
                         Row() {
                             Column(
-                                modifier = Modifier.weight(1f).offset(x = 80.dp, y = 20.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .offset(x = 80.dp, y = 20.dp),
                                 horizontalAlignment = Alignment.Start
                             ) {
                                 WaterButtons()
                             }
                             Box(
-                                modifier = Modifier.weight(1f).offset(x = -70.dp, y = -25.dp)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .offset(x = -70.dp, y = -25.dp)
                             ) {
                                 HydrationCircle()
                             }
                         }
                     } else {
                         Box(
-                            modifier = Modifier.fillMaxSize().padding(bottom = 100.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(bottom = 100.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -326,8 +335,8 @@ fun WeatherRequest() {
         }
 
         weatherData?.let {
-            val temperature = it.getJSONObject("main").getDouble("temp") - 273.15
-            if (temperature > Constants.MAX_TEMPERATURE) {
+            AppVariables.temperature.doubleValue = it.getJSONObject("main").getDouble("temp") - 273.15
+            if (AppVariables.temperature.doubleValue >= Constants.MAX_TEMPERATURE) {
                 sendNotification(context)
                 lastNotificationTime = System.currentTimeMillis()
             }
@@ -374,6 +383,11 @@ fun sendNotification(context: Context) {
         "Hydration Notifications",
         NotificationManager.IMPORTANCE_HIGH
     )
+
+    // Set the vibration pattern for the channel
+    notificationChannel.vibrationPattern = longArrayOf(0, 1000, 500, 1000)
+    notificationChannel.enableVibration(true)
+
     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     notificationManager.createNotificationChannel(notificationChannel)
 
@@ -382,11 +396,13 @@ fun sendNotification(context: Context) {
         .setContentText("The temperature is high. Don't forget to drink water!")
         .setSmallIcon(R.drawable.drop)
         .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setVibrate(longArrayOf(0, 1000, 500, 1000))
         .build()
 
-    Log.d("Notification", "NOTIFICATION BEEING SET: $notification")
+    Log.d("Notification", "NOTIFICATION BEING SET: $notification")
     NotificationManagerCompat.from(context).notify(0, notification)
 }
+
 
 /**
  * This function returns the size of a button based on the orientation of the device.

@@ -52,13 +52,13 @@ import java.util.Locale
 
 private lateinit var databaseManager: DatabaseManager
 private lateinit var database: SQLiteDatabase
+private val selectedButton =  mutableStateOf("D")
 class History : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             val selectedDate = remember { mutableStateOf(Date()) }
-            val selectedButton = remember { mutableStateOf("D") }
 
             Box(modifier = Modifier.fillMaxSize()) {
                 MyButtonsRow()
@@ -67,9 +67,9 @@ class History : ComponentActivity() {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("History", style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold))
                     AddSpacer(25.dp)
-                    TimeSelectionCard(selectedDate, selectedButton)
+                    TimeSelectionCard(selectedDate)
                     AddSpacer(20.dp)
-                    GraphCard(selectedDate, selectedButton)
+                    GraphCard(selectedDate)
                 }
             }
         }
@@ -97,9 +97,10 @@ class History : ComponentActivity() {
 
 /**
  * A composable function that displays a card for selecting time intervals, such as days, weeks, months, and years.
+ *  @param selectedDate The currently selected date.
  */
 @Composable
-fun TimeSelectionCard(selectedDate: MutableState<Date>, selectedButton: MutableState<String>) {
+fun TimeSelectionCard(selectedDate: MutableState<Date>) {
     Card(modifier = Modifier
         .fillMaxWidth()
         .height(40.dp)
@@ -251,12 +252,11 @@ fun NavigationButton(selectedDate: MutableState<Date>, selectedButton: MutableSt
 /**
  * A composable function that displays a card with a graph.
  * @param selectedDate The currently selected date.
- * @param selectedButton The currently selected button.
  * @return A card with a graph, total amount, and date navigation.
  */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun GraphCard(selectedDate: MutableState<Date>, selectedButton: MutableState<String>) {
+fun GraphCard(selectedDate: MutableState<Date>) {
     val text = if (AppVariables.period.value == "day") "Total " else "Average "
 
     Card(

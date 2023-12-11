@@ -611,7 +611,7 @@ fun MyButtonsRow() {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White),
+                    .background(if (AppVariables.temperature.doubleValue < 23) colorResource(id = R.color.rose_gold) else colorResource(id = R.color.blue_menu)),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 AddSpacer(30.dp)
