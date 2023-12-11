@@ -161,7 +161,7 @@ class DatabaseManager(
             activity_level TEXT,
             height FLOAT,
             weight FLOAT,
-            recalculate BOOLEAN DEFAULT 'FALSE',
+            recalculate BOOLEAN DEFAULT 0,
             deleted_at TEXT DEFAULT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
@@ -502,6 +502,7 @@ class DatabaseManager(
             put("activity_level", defaultUserInfo.activityLevel)
             put("height", defaultUserInfo.height)
             put("weight", defaultUserInfo.weight)
+            put("recalculate", 0)
         }
 
         Log.d("DATABASE", "USER INSERTED")
