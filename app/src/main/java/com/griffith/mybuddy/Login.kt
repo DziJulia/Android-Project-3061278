@@ -514,7 +514,6 @@ fun LogOutButton(modifier: Modifier = Modifier) {
             delay(2000)
             showDialog.value = false
             //RESET ALL VALUES PROBABLY IS BETTER WAY OF DOING THIS
-            //RESET ALL VALUES PROBABLY IS BETTER WAY OF DOING THIS
             AppVariables.resetAllValues()
 
             Log.d("EMAIL", "email address: ${AppVariables.emailAddress}")
