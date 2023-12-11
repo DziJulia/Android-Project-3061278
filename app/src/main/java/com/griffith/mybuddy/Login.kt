@@ -514,14 +514,10 @@ fun LogOutButton(modifier: Modifier = Modifier) {
             delay(2000)
             showDialog.value = false
             //RESET ALL VALUES PROBABLY IS BETTER WAY OF DOING THIS
-            AppVariables.emailAddress = mutableStateOf("")
-            AppVariables.selectedButtonMenu = "C"
-            AppVariables.hydrationLevel = 0
-            AppVariables.hydrationGoal.value = "0"
-            AppVariables.emailAddressRegistration.value = ""
-            AppVariables.forgotEmailAddress.value = ""
+            //RESET ALL VALUES PROBABLY IS BETTER WAY OF DOING THIS
+            AppVariables.resetAllValues()
 
-            Log.d("EMAIL", "hydrationLevelApp: ${AppVariables.emailAddress}")
+            Log.d("EMAIL", "email address: ${AppVariables.emailAddress}")
             val intent = Intent(context, Login::class.java)
             context.startActivity(intent)
         }

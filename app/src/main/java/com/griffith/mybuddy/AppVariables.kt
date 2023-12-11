@@ -174,4 +174,13 @@ object AppVariables {
      * A mutable state holding a Date object representing a newly selected date.
      */
     val newSelectedDate = mutableStateOf(Date())
+
+    fun resetAllValues() {
+        emailAddress = mutableStateOf("")
+        selectedButtonMenu = "C"
+        hydrationLevel = 0
+        hydrationGoal.value = "0"
+        emailAddressRegistration.value = ""
+        forgotEmailAddress.value = ""
+    }
 }
