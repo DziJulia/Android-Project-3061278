@@ -8,11 +8,13 @@ package com.griffith.mybuddy
  * @param activityLevel The activity level of the user.
  * @param height The height of the user.
  * @param weight The weight of the user.
+ * @param recalculate The recalculate should be visible or not
  */
 data class UserInfo(
     val name: String?,
     val gender: String?,
     val activityLevel: String?,
     val height: Float?,
-    val weight: Float?
+    val weight: Float?,
+    val recalculate: Boolean?
 )

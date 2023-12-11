@@ -147,6 +147,7 @@ class DatabaseManager(
      * - height: The height of the user in meters.
      * - weight: The weight of the user in kilograms.
      * - user_id: Foreign key referencing the user associated with the profile.
+     * - recalculate The recalculate should be visible or not
      * - deleted_at: Date and time when the user profile was deleted, default is NULL.
      *
      * Foreign Key:
@@ -160,6 +161,7 @@ class DatabaseManager(
             activity_level TEXT,
             height FLOAT,
             weight FLOAT,
+            recalculate BOOLEAN DEFAULT 'FALSE',
             deleted_at TEXT DEFAULT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
@@ -490,7 +492,7 @@ class DatabaseManager(
         val userId = getUserIdByEmail(readableDatabase, email) ?: return
 
         // Create a default UserInfo object with empty values and 0.0 for height and weight
-        val defaultUserInfo = UserInfo("", "", "", 0f, 0f)
+        val defaultUserInfo = UserInfo("", "", "", 0f, 0f, false)
 
         val values = ContentValues().apply {
             // Set default user profile values
@@ -517,10 +519,10 @@ class DatabaseManager(
      */
     fun getUserProfile(email: String): UserInfo? {
         val db = readableDatabase
-        val userId = getUserIdByEmail(readableDatabase, email) ?: return UserInfo("","","",0f,0f)
+        val userId = getUserIdByEmail(readableDatabase, email) ?: return UserInfo("","","",0f,0f, false)
         val cursor = db.query(
             "UserProfile",
-            arrayOf("name", "gender", "activity_level", "height", "weight"),
+            arrayOf("name", "gender", "activity_level", "height", "weight", "recalculate"),
             "user_id=?",
             arrayOf(userId.toString()),
             null,
@@ -533,6 +535,7 @@ class DatabaseManager(
         var activityLevel: String? = ""
         var height: Float? = 0f
         var weight: Float? = 0f
+        var recalculate: Boolean
 
         cursor.use {
             if (it.moveToFirst()) {
@@ -546,13 +549,14 @@ class DatabaseManager(
                 activityLevel = getColumnValue("activity_level")
                 height = getColumnValue("height")?.toFloatOrNull()
                 weight = getColumnValue("weight")?.toFloatOrNull()
+                recalculate = getColumnValue("recalculate")?.toInt() == 1
             } else {
                 // No user profile found, return null
                 return null
             }
         }
-
-        return UserInfo(name, gender, activityLevel, height, weight)
+        Log.d("RETRIEVED", "USER INSERTED : $recalculate")
+        return UserInfo(name, gender, activityLevel, height, weight, recalculate)
     }
 
     /**
@@ -571,7 +575,8 @@ class DatabaseManager(
         gender: String,
         activityLevel: String,
         height: Float,
-        weight: Float
+        weight: Float,
+        recalculate: Boolean
     ) {
         val userId = getUserIdByEmail(readableDatabase, email) ?: return
         val values = ContentValues().apply {
@@ -581,6 +586,7 @@ class DatabaseManager(
             put("height", height)
             put("weight", weight)
             put("user_id", userId)
+            put("recalculate", recalculate)
         }
 
         val affectedRows = writableDatabase.update(
@@ -589,7 +595,8 @@ class DatabaseManager(
             "user_id = ?",
             arrayOf(userId.toString())
         )
-
+        Log.d("RETRIEVED", "recalculate: $recalculate")
+        Log.d("RETRIEVED", "recalculate: ${AppVariables.hydrationGoalManuallySet.value}")
         if (affectedRows == 0) {
             writableDatabase.insert("UserProfile", null, values)
         }

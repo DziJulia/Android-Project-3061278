@@ -111,6 +111,7 @@ class Profile : ComponentActivity() {
                     AppVariables.activityLevel.value = userProfile.activityLevel ?: ""
                     AppVariables.height.value = userProfile.height.toString()
                     AppVariables.weight.value = userProfile.weight.toString()
+                    AppVariables.hydrationGoalManuallySet.value = userProfile.recalculate!!
                 }
 
                 val (goal, value) = hydrationTable
@@ -130,7 +131,7 @@ class Profile : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onStop() {
         super.onStop()
-        Log.d("hydrationTable", "hydrationLevelDATA: ${AppVariables.hydrationGoal.value.toInt()}")
+        Log.d("AppVariables.hydrationGoalManuallySet.value", "AppVariables.hydrationGoalManuallySet.value: ${AppVariables.hydrationGoalManuallySet.value}")
         // Update the user profile in the database
         CoroutineScope(Dispatchers.IO).launch {
             // Update the user profile in the database
@@ -141,7 +142,8 @@ class Profile : ComponentActivity() {
                     AppVariables.gender.value,
                     AppVariables.activityLevel.value,
                     AppVariables.height.value.toFloat(),
-                    AppVariables.weight.value.toFloat()
+                    AppVariables.weight.value.toFloat(),
+                    AppVariables.hydrationGoalManuallySet.value
                 )
             }
 
